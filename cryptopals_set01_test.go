@@ -1,7 +1,9 @@
 package cryptopals_test
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 
 	"github.com/kieron-pivotal/cryptopals/conversion"
 	"github.com/kieron-pivotal/cryptopals/operations"
@@ -41,8 +43,37 @@ var _ = Describe("Crytopals Set 01", func() {
 		hex := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
 		bytes, err := conversion.HexToBytes(hex)
 		Expect(err).NotTo(HaveOccurred())
-		clear := operations.SingleCharXorDecrypt(bytes)
+		clear, _ := operations.SingleCharXorDecrypt(bytes)
 		Expect(clear).ToNot(BeEmpty())
 		fmt.Println(clear)
+	})
+
+	It("question 4", func() {
+		file, err := os.Open("./assets/01_04.txt")
+		Expect(err).NotTo(HaveOccurred())
+		defer file.Close()
+
+		minScore := 1e20
+		minTxt := ""
+		minLine := 0
+
+		scanner := bufio.NewScanner(file)
+		line := 0
+		for scanner.Scan() {
+			line++
+			hex := scanner.Text()
+			bytes, err := conversion.HexToBytes(hex)
+			Expect(err).NotTo(HaveOccurred())
+			txt, score := operations.SingleCharXorDecrypt(bytes)
+
+			if score < minScore {
+				minScore = score
+				minTxt = txt
+				minLine = line
+			}
+		}
+
+		Expect(minTxt).ToNot(BeEmpty())
+		fmt.Println(minTxt, minLine)
 	})
 })

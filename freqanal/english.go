@@ -1,70 +1,50 @@
 package freqanal
 
 import (
-	"sort"
 	"strings"
 )
 
 var runeOrders map[rune]int
-
-func init() {
-	runeOrders = map[rune]int{}
-
-	for i, r := range "etaoinshrdlcumwfgypbvkjxqz" {
-		runeOrders[r] = i
-	}
+var expectedProportions = []float64{
+	0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015,
+	0.06094, 0.06966, 0.00153, 0.00772, 0.04025, 0.02406, 0.06749,
+	0.07507, 0.01929, 0.00095, 0.05987, 0.06327, 0.09056, 0.02758,
+	0.00978, 0.02360, 0.00150, 0.01974, 0.00074,
 }
 
-func FreqScoreEnglish(in string) int {
-	score := 0
-	sorted := FreqSortStr(in)
+func FreqScoreEnglish(in string) float64 {
 
-	for i, r := range sorted {
-		diff := runeOrders[r] - i
-		if diff < 0 {
-			diff *= -1
+	s := strings.ToLower(in)
+	freqs := map[int]float64{}
+
+	l := float64(0)
+	ignored := 0
+
+	for _, r := range s {
+		if r >= 'a' && r <= 'z' {
+			freqs[int(r-'a')]++
+			l++
+		} else if r >= 'A' && r <= 'Z' {
+			freqs[int(r-'A')]++
+			l++
+		} else if r == ',' || r == '.' || r == '\'' || r == ' ' {
+			l++
+		} else if r >= 32 && r <= 126 {
+			ignored++
+		} else if r == 9 || r == 10 || r == 13 {
+			l++
+		} else {
+			return 1e20
 		}
-		switch diff {
-		case 0:
-			score += 20
-		case 1:
-			score += 10
-		case 2:
-			score += 5
-		case 3:
-			score += 2
-		case 4:
-			score += 1
-		}
+	}
+
+	score := float64(ignored * ignored * ignored)
+
+	for i := 0; i < 26; i++ {
+		exp := expectedProportions[i] * l
+		fv := freqs[i]
+		score += (fv - exp) * (fv - exp) / exp
 	}
 
 	return score
-}
-
-func FreqSortStr(s string) string {
-	freqs := GetFreqs(s)
-	runes := []rune{}
-	for k := range freqs {
-		runes = append(runes, k)
-	}
-
-	sort.Slice(runes, func(i, j int) bool {
-		if freqs[runes[i]] == freqs[runes[j]] {
-			return runes[i] > runes[j]
-		}
-		return freqs[runes[i]] > freqs[runes[j]]
-	})
-	return string(runes)
-}
-
-func GetFreqs(s string) map[rune]int {
-	s = strings.ToLower(s)
-	ret := map[rune]int{}
-	for _, r := range s {
-		if r < 'a' || r > 'z' {
-			continue
-		}
-		ret[r]++
-	}
-	return ret
 }

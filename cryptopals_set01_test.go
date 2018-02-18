@@ -36,4 +36,13 @@ var _ = Describe("Crytopals Set 01", func() {
 		fmt.Println(string(bytes2))
 		fmt.Println(string(xoredBytes))
 	})
+
+	It("question 3", func() {
+		hex := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+		bytes, err := conversion.HexToBytes(hex)
+		Expect(err).NotTo(HaveOccurred())
+		clear := operations.SingleCharXorDecrypt(bytes)
+		Expect(clear).ToNot(BeEmpty())
+		fmt.Println(clear)
+	})
 })

@@ -11,8 +11,7 @@ var _ = Describe("Logical", func() {
 
 	DescribeTable("Xor",
 		func(b1, b2, expectedXor []byte) {
-			xor, err := operations.Xor(b1, b2)
-			Expect(err).NotTo(HaveOccurred())
+			xor := operations.Xor(b1, b2)
 			Expect(xor).To(Equal(expectedXor))
 		},
 

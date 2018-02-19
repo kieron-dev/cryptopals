@@ -43,9 +43,9 @@ var _ = Describe("Crytopals Set 01", func() {
 		hex := "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
 		bytes, err := conversion.HexToBytes(hex)
 		Expect(err).NotTo(HaveOccurred())
-		clear, _ := operations.SingleCharXorDecrypt(bytes)
+		clear, b, _ := operations.SingleCharXorDecrypt(bytes)
 		Expect(clear).ToNot(BeEmpty())
-		fmt.Println(clear)
+		fmt.Println(clear, b)
 	})
 
 	It("question 4", func() {
@@ -59,21 +59,24 @@ var _ = Describe("Crytopals Set 01", func() {
 
 		scanner := bufio.NewScanner(file)
 		line := 0
+		var xorByte byte
+
 		for scanner.Scan() {
 			line++
 			hex := scanner.Text()
 			bytes, err := conversion.HexToBytes(hex)
 			Expect(err).NotTo(HaveOccurred())
-			txt, score := operations.SingleCharXorDecrypt(bytes)
+			txt, xb, score := operations.SingleCharXorDecrypt(bytes)
 
 			if score < minScore {
 				minScore = score
 				minTxt = txt
 				minLine = line
+				xorByte = xb
 			}
 		}
 
 		Expect(minTxt).ToNot(BeEmpty())
-		fmt.Println(minTxt, minLine)
+		fmt.Println(minTxt, xorByte, minLine)
 	})
 })

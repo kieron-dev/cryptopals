@@ -17,8 +17,8 @@ var _ = Describe("Logical", func() {
 
 		Entry("empty", []byte{}, []byte{}, []byte{}),
 		Entry("single bytes", []byte{0}, []byte{1}, []byte{1}),
-		Entry("b0 longer than b1", []byte{0, 1}, []byte{1}, []byte{1, 1}),
-		Entry("b1 longer than b0", []byte{1}, []byte{1, 0}, []byte{0, 0}),
+		Entry("b0 longer than b1", []byte{0, 1, 0}, []byte{1}, []byte{1, 0, 1}),
+		Entry("b1 longer than b0", []byte{1}, []byte{1, 0}, []byte{0}),
 	)
 
 })

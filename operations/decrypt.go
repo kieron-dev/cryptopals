@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"fmt"
+
 	"github.com/kieron-pivotal/cryptopals/freqanal"
 )
 
@@ -19,4 +21,30 @@ func SingleCharXorDecrypt(in []byte) (clear string, xorByte byte, score float64)
 	}
 
 	return clear, xorByte, score
+}
+
+func RepeatingXorDecrypt(in []byte) (clear, key string) {
+	probableKeyLengths := ProbableKeyLengths(in)
+	minScore := 1e20
+	probKey := []byte{}
+
+	for _, l := range probableKeyLengths {
+
+		engScore := float64(0)
+		key := []byte{}
+		for _, s := range SliceBytes(in, l) {
+			_, x, sc := SingleCharXorDecrypt(s)
+			engScore += sc
+			key = append(key, x)
+		}
+
+		if engScore < minScore {
+			minScore = engScore
+			probKey = key
+			fmt.Println(l)
+		}
+
+	}
+	clear = string(Xor(in, probKey))
+	return clear, string(probKey)
 }

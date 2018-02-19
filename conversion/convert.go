@@ -3,6 +3,8 @@ package conversion
 import (
 	"encoding/base64"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 )
 
@@ -41,4 +43,27 @@ func BytesToBase64(bytes []byte) string {
 
 func Base64ToBytes(b64 string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(b64)
+}
+
+func ReadBase64File(filename string) ([]byte, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return []byte{}, err
+	}
+	defer file.Close()
+
+	decoder := base64.NewDecoder(base64.StdEncoding, file)
+
+	bytes := []byte{}
+	buf := make([]byte, 256)
+	for {
+		n, err := decoder.Read(buf)
+		if err != io.EOF {
+			bytes = append(bytes, buf[0:n]...)
+		} else {
+			break
+		}
+	}
+
+	return bytes, nil
 }

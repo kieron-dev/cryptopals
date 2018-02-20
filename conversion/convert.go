@@ -2,39 +2,17 @@ package conversion
 
 import (
 	"encoding/base64"
-	"fmt"
-	"io"
+	"encoding/hex"
+	"io/ioutil"
 	"os"
-	"strconv"
 )
 
-func HexToBytes(hex string) ([]byte, error) {
-	ret := []byte{}
-
-	if len(hex)%2 == 1 {
-		return ret, fmt.Errorf("malformed hex string %s", hex)
-	}
-
-	for len(hex) > 0 {
-		str := hex[0:2]
-		hex = hex[2:]
-		num, err := strconv.ParseInt(str, 16, 0)
-		if err != nil {
-			return []byte{}, err
-		}
-		ret = append(ret, byte(num))
-	}
-
-	return ret, nil
+func HexToBytes(in string) ([]byte, error) {
+	return hex.DecodeString(in)
 }
 
 func BytesToHex(bytes []byte) string {
-	ret := ""
-	for _, b := range bytes {
-		hex := fmt.Sprintf("%02x", b)
-		ret += hex
-	}
-	return ret
+	return hex.EncodeToString(bytes)
 }
 
 func BytesToBase64(bytes []byte) string {
@@ -53,17 +31,5 @@ func ReadBase64File(filename string) ([]byte, error) {
 	defer file.Close()
 
 	decoder := base64.NewDecoder(base64.StdEncoding, file)
-
-	bytes := []byte{}
-	buf := make([]byte, 256)
-	for {
-		n, err := decoder.Read(buf)
-		if err != io.EOF {
-			bytes = append(bytes, buf[0:n]...)
-		} else {
-			break
-		}
-	}
-
-	return bytes, nil
+	return ioutil.ReadAll(decoder)
 }

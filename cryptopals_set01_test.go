@@ -92,7 +92,7 @@ I go crazy when I hear a cymbal`)
 		Expect(outHex).To(Equal(expectedOut))
 	})
 
-	FIt("question 6", func() {
+	It("question 6", func() {
 		bytes, err := conversion.ReadBase64File("./assets/01_06.txt")
 		Expect(err).NotTo(HaveOccurred())
 

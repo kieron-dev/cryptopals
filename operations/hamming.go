@@ -17,17 +17,22 @@ func HammingDistance(b1, b2 []byte) (dist int) {
 }
 
 func KeyLengthHammingDistance(b []byte, l int) float64 {
-	b1 := b[0:l]
-	b2 := b[l : 2*l]
-	b3 := b[2*l : 3*l]
-	b4 := b[3*l : 4*l]
-	d12 := float64(HammingDistance(b1, b2))
-	d13 := float64(HammingDistance(b1, b3))
-	d14 := float64(HammingDistance(b1, b4))
-	d23 := float64(HammingDistance(b2, b3))
-	d24 := float64(HammingDistance(b2, b4))
-	d34 := float64(HammingDistance(b3, b4))
-	return (d12 + d13 + d14 + d23 + d24 + d34) / (6 * float64(l))
+	const numToCheck = 4
+
+	slices := [][]byte{}
+	for i := 0; i < numToCheck; i++ {
+		slices = append(slices, b[l*i:l*(i+1)])
+	}
+
+	sum := 0
+	for i := 0; i < numToCheck; i++ {
+		for j := i + 1; j < numToCheck; j++ {
+			sum += HammingDistance(slices[i], slices[j])
+		}
+	}
+
+	combs := (numToCheck * (numToCheck - 1)) / 2
+	return float64(sum) / (float64(combs * l))
 }
 
 func ProbableKeyLengths(b []byte) []int {

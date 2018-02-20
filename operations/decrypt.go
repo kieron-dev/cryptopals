@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/kieron-pivotal/cryptopals/freqanal"
 )
 
@@ -41,7 +39,6 @@ func RepeatingXorDecrypt(in []byte) (clear, key string) {
 		if engScore < minScore {
 			minScore = engScore
 			probKey = key
-			fmt.Println(l)
 		}
 
 	}

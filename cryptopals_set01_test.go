@@ -99,7 +99,7 @@ I go crazy when I hear a cymbal`)
 		clear, key := operations.RepeatingXorDecrypt(bytes)
 		Expect(clear).To(ContainSubstring("funky"))
 
-		fmt.Println("Key", key)
+		fmt.Printf("Key: '%s'\n", key)
 		fmt.Println(clear)
 
 	})

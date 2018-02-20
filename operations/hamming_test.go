@@ -21,8 +21,8 @@ var _ = Describe("Hamming", func() {
 var _ = Describe("Hamming in str", func() {
 
 	It("calcs hamming distance in a string", func() {
-		Expect(operations.KeyLengthHammingDistance([]byte("this is a testwokka wokka!!!"), 14)).
-			To(Equal(37))
+		Expect(operations.KeyLengthHammingDistance([]byte("this is a testwokka wokka!!!this is a testwokka wokka!!!"), 14)).
+			To(Equal(4 * 37.0 / (6 * 14.0)))
 	})
 
 })

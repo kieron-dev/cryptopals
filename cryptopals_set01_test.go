@@ -103,4 +103,17 @@ I go crazy when I hear a cymbal`)
 		fmt.Println(clear)
 
 	})
+
+	FIt("question 7", func() {
+		bytes, err := conversion.ReadBase64File("./assets/01_07.txt")
+		Expect(err).NotTo(HaveOccurred())
+
+		clear, err := operations.AES128ECBDecode(bytes, []byte("YELLOW SUBMARINE"))
+		Expect(err).NotTo(HaveOccurred())
+
+		clearStr := string(clear)
+		Expect(clearStr).To(ContainSubstring("funky"))
+
+		fmt.Println(clearStr)
+	})
 })

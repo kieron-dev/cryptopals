@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"crypto/aes"
+
 	"github.com/kieron-pivotal/cryptopals/freqanal"
 )
 
@@ -44,4 +46,16 @@ func RepeatingXorDecrypt(in []byte) (clear, key string) {
 	}
 	clear = string(Xor(in, probKey))
 	return clear, string(probKey)
+}
+
+func AES128ECBDecode(in []byte, key []byte) (clear []byte, err error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	for i := 0; i*aes.BlockSize < len(in); i++ {
+		block.Decrypt(in[i*aes.BlockSize:(i+1)*aes.BlockSize], in[i*aes.BlockSize:(i+1)*aes.BlockSize])
+	}
+	return in, nil
 }

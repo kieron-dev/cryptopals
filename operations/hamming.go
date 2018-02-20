@@ -56,10 +56,11 @@ func ProbableKeyLengths(b []byte) []int {
 	})
 
 	ret := []int{}
-	for _, l := range lengths {
-		ret = append(ret, l.l)
+	const numToReturn = 3
+	for i := 0; i < numToReturn; i++ {
+		ret = append(ret, lengths[i].l)
 	}
-	return ret[:3]
+	return ret
 }
 
 func SliceBytes(b []byte, l int) [][]byte {

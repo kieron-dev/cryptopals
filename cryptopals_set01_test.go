@@ -104,7 +104,7 @@ I go crazy when I hear a cymbal`)
 
 	})
 
-	FIt("question 7", func() {
+	It("question 7", func() {
 		bytes, err := conversion.ReadBase64File("./assets/01_07.txt")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -115,5 +115,23 @@ I go crazy when I hear a cymbal`)
 		Expect(clearStr).To(ContainSubstring("funky"))
 
 		fmt.Println(clearStr)
+	})
+
+	It("question 8", func() {
+		file, err := os.Open("./assets/01_08.txt")
+		Expect(err).NotTo(HaveOccurred())
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		line := 0
+		for scanner.Scan() {
+			line++
+			hex := scanner.Text()
+			if operations.DetectAES128ECB(string(hex)) {
+				break
+			}
+		}
+		Expect(line).To(Equal(133))
+
 	})
 })

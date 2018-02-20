@@ -50,12 +50,29 @@ func RepeatingXorDecrypt(in []byte) (clear, key string) {
 
 func AES128ECBDecode(in []byte, key []byte) (clear []byte, err error) {
 	block, err := aes.NewCipher(key)
+	blockSize := block.BlockSize()
 	if err != nil {
 		return []byte{}, err
 	}
 
-	for i := 0; i*aes.BlockSize < len(in); i++ {
-		block.Decrypt(in[i*aes.BlockSize:(i+1)*aes.BlockSize], in[i*aes.BlockSize:(i+1)*aes.BlockSize])
+	for i := 0; i*blockSize < len(in); i++ {
+		block.Decrypt(in[i*blockSize:(i+1)*blockSize],
+			in[i*blockSize:(i+1)*blockSize],
+		)
 	}
 	return in, nil
+}
+
+func DetectAES128ECB(hex string) bool {
+	blocks := map[string]int{}
+	blockSize := 32
+
+	for i := 0; i*blockSize < len(hex); i++ {
+		s := hex[i*blockSize : (i+1)*blockSize]
+		if _, ok := blocks[s]; ok {
+			return true
+		}
+		blocks[s]++
+	}
+	return false
 }

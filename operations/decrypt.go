@@ -48,19 +48,72 @@ func RepeatingXorDecrypt(in []byte) (clear, key string) {
 	return clear, string(probKey)
 }
 
-func AES128ECBDecode(in []byte, key []byte) (clear []byte, err error) {
+func AES128ECBEncode(in []byte, key []byte) (ciphertext []byte, err error) {
 	block, err := aes.NewCipher(key)
-	blockSize := block.BlockSize()
 	if err != nil {
 		return []byte{}, err
 	}
+	blockSize := block.BlockSize()
 
 	for i := 0; i*blockSize < len(in); i++ {
-		block.Decrypt(in[i*blockSize:(i+1)*blockSize],
-			in[i*blockSize:(i+1)*blockSize],
-		)
+		slice := in[i*blockSize : (i+1)*blockSize]
+		dst := make([]byte, blockSize)
+		block.Encrypt(dst, slice)
+		ciphertext = append(ciphertext, dst...)
 	}
-	return in, nil
+	return ciphertext, nil
+}
+
+func AES128ECBDecode(in []byte, key []byte) (clear []byte, err error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return []byte{}, err
+	}
+	blockSize := block.BlockSize()
+
+	for i := 0; i*blockSize < len(in); i++ {
+		slice := in[i*blockSize : (i+1)*blockSize]
+		dst := make([]byte, blockSize)
+		block.Decrypt(dst, slice)
+		clear = append(clear, dst...)
+	}
+	return clear, nil
+}
+
+func AES128CBCEncode(in []byte, key []byte, iv []byte) (ciphertext []byte, err error) {
+	prev := iv
+	blockSize := len(key)
+	for i := 0; i*len(key) < len(in); i++ {
+		slice := in[i*blockSize : (i+1)*blockSize]
+		xor := Xor(prev, slice)
+		dst, err := AES128ECBEncode(xor, key)
+		if err != nil {
+			return []byte{}, err
+		}
+		ciphertext = append(ciphertext, dst...)
+		prev = dst
+	}
+	return ciphertext, nil
+}
+
+func AES128CBCDecode(ciphertext []byte, key []byte, iv []byte) (clear []byte, err error) {
+	blocks := len(ciphertext) / len(key)
+	bs := len(key)
+	for i := blocks - 1; i > 0; i-- {
+		slice := ciphertext[i*bs : (i+1)*bs]
+		dst, err := AES128ECBDecode(slice, key)
+		if err != nil {
+			return []byte{}, err
+		}
+		clear = append(Xor(dst, ciphertext[(i-1)*bs:i*bs]), clear...)
+	}
+	slice := ciphertext[0:bs]
+	dst, err := AES128ECBDecode(slice, key)
+	if err != nil {
+		return []byte{}, err
+	}
+	clear = append(Xor(dst, iv), clear...)
+	return clear, nil
 }
 
 func DetectAES128ECB(hex string) bool {

@@ -83,7 +83,7 @@ func AES128ECBDecode(in []byte, key []byte) (clear []byte, err error) {
 func AES128CBCEncode(in []byte, key []byte, iv []byte) (ciphertext []byte, err error) {
 	prev := iv
 	blockSize := len(key)
-	for i := 0; i*len(key) < len(in); i++ {
+	for i := 0; i*blockSize < len(in); i++ {
 		slice := in[i*blockSize : (i+1)*blockSize]
 		xor := Xor(prev, slice)
 		dst, err := AES128ECBEncode(xor, key)
@@ -97,22 +97,17 @@ func AES128CBCEncode(in []byte, key []byte, iv []byte) (ciphertext []byte, err e
 }
 
 func AES128CBCDecode(ciphertext []byte, key []byte, iv []byte) (clear []byte, err error) {
-	blocks := len(ciphertext) / len(key)
-	bs := len(key)
-	for i := blocks - 1; i > 0; i-- {
-		slice := ciphertext[i*bs : (i+1)*bs]
+	prev := iv
+	blockSize := len(key)
+	for i := 0; i*blockSize < len(ciphertext); i++ {
+		slice := ciphertext[i*blockSize : (i+1)*blockSize]
 		dst, err := AES128ECBDecode(slice, key)
 		if err != nil {
 			return []byte{}, err
 		}
-		clear = append(Xor(dst, ciphertext[(i-1)*bs:i*bs]), clear...)
+		clear = append(clear, Xor(prev, dst)...)
+		prev = slice
 	}
-	slice := ciphertext[0:bs]
-	dst, err := AES128ECBDecode(slice, key)
-	if err != nil {
-		return []byte{}, err
-	}
-	clear = append(Xor(dst, iv), clear...)
 	return clear, nil
 }
 

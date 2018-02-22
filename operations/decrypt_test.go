@@ -52,4 +52,12 @@ var _ = Describe("Decrypt", func() {
 			return operations.AES128CBCEncode(in, key, iv)
 		})).To(BeFalse())
 	})
+
+	It("can detect block size", func() {
+		encoder := func(in []byte) ([]byte, error) {
+			key := operations.RandomSlice(16)
+			return operations.AES128ECBEncode(in, key)
+		}
+		Expect(operations.DetectBlockSize(encoder)).To(Equal(16))
+	})
 })

@@ -142,6 +142,28 @@ func EncodingUsesECB(encoder func([]byte) ([]byte, error)) bool {
 	return DetectAES128ECB(conversion.BytesToHex(ciphertext))
 }
 
+func DetectBlockSize(encoder func([]byte) ([]byte, error)) int {
+	str := []byte("a")
+	enc, err := encoder(str)
+	if err != nil {
+		panic(err)
+	}
+	l := len(enc)
+	i := 2
+	for {
+		str = bytes.Repeat([]byte("a"), i)
+		enc, err = encoder(str)
+		if err != nil {
+			panic(err)
+		}
+		if l != len(enc) {
+			return len(enc) - l
+		}
+		l = len(enc)
+		i++
+	}
+}
+
 func DetectAES128ECB(hex string) bool {
 	blocks := map[string]int{}
 	blockSize := 32

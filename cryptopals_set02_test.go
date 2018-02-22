@@ -28,7 +28,22 @@ var _ = Describe("CryptopalsSet02", func() {
 		clear, err := operations.AES128CBCDecode(ciphertext, key, iv)
 		Expect(err).NotTo(HaveOccurred())
 		fmt.Println(string(clear))
+	})
 
+	It("question 11", func() {
+		countCBC := 0
+		countECB := 0
+
+		for i := 0; i < 16; i++ {
+			if operations.EncodingUsesECB(operations.AES128RandomEncode) {
+				countECB++
+			} else {
+				countCBC++
+			}
+		}
+
+		Expect(countECB).To(BeNumerically(">", 0))
+		Expect(countCBC).To(BeNumerically(">", 0))
 	})
 
 })

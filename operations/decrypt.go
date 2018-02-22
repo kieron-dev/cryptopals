@@ -1,8 +1,12 @@
 package operations
 
 import (
+	"bytes"
 	"crypto/aes"
+	"math/rand"
+	"time"
 
+	"github.com/kieron-pivotal/cryptopals/conversion"
 	"github.com/kieron-pivotal/cryptopals/freqanal"
 )
 
@@ -54,9 +58,10 @@ func AES128ECBEncode(in []byte, key []byte) (ciphertext []byte, err error) {
 		return []byte{}, err
 	}
 	blockSize := block.BlockSize()
+	clear := PKCS7(in, blockSize)
 
 	for i := 0; i*blockSize < len(in); i++ {
-		slice := in[i*blockSize : (i+1)*blockSize]
+		slice := clear[i*blockSize : (i+1)*blockSize]
 		dst := make([]byte, blockSize)
 		block.Encrypt(dst, slice)
 		ciphertext = append(ciphertext, dst...)
@@ -77,7 +82,8 @@ func AES128ECBDecode(in []byte, key []byte) (clear []byte, err error) {
 		block.Decrypt(dst, slice)
 		clear = append(clear, dst...)
 	}
-	return clear, nil
+	out := RemovePKCS7(clear, blockSize)
+	return out, nil
 }
 
 func AES128CBCEncode(in []byte, key []byte, iv []byte) (ciphertext []byte, err error) {
@@ -109,6 +115,31 @@ func AES128CBCDecode(ciphertext []byte, key []byte, iv []byte) (clear []byte, er
 		prev = slice
 	}
 	return clear, nil
+}
+
+func AES128RandomEncode(clear []byte) (ciphertext []byte, err error) {
+	key := RandomSlice(16)
+	iv := RandomSlice(16)
+	rand.Seed(time.Now().UnixNano())
+	preLen := 5 + rand.Intn(6)
+	postLen := 5 + rand.Intn(6)
+	preBytes := RandomSlice(preLen)
+	postBytes := RandomSlice(postLen)
+	in := append(preBytes, clear...)
+	in = append(in, postBytes...)
+	mode := rand.Intn(2)
+	if mode == 0 {
+		return AES128ECBEncode(in, key)
+	}
+	return AES128CBCEncode(in, key, iv)
+}
+
+func EncodingUsesECB(encoder func([]byte) ([]byte, error)) bool {
+	ciphertext, err := encoder(bytes.Repeat([]byte{0}, 48))
+	if err != nil {
+		panic(err)
+	}
+	return DetectAES128ECB(conversion.BytesToHex(ciphertext))
 }
 
 func DetectAES128ECB(hex string) bool {

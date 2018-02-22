@@ -39,4 +39,17 @@ var _ = Describe("Decrypt", func() {
 			})
 		})
 	})
+
+	It("can detect CBC or EBC in a black box", func() {
+		key := operations.RandomSlice(16)
+		iv := operations.RandomSlice(16)
+
+		Expect(operations.EncodingUsesECB(func(in []byte) ([]byte, error) {
+			return operations.AES128ECBEncode(in, key)
+		})).To(BeTrue())
+
+		Expect(operations.EncodingUsesECB(func(in []byte) ([]byte, error) {
+			return operations.AES128CBCEncode(in, key, iv)
+		})).To(BeFalse())
+	})
 })

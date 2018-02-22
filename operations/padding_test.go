@@ -31,4 +31,14 @@ var _ = Describe("Operations/Padding", func() {
 		Expect(operations.PKCS7(in, 4)).To(Equal(append(in, byte(1))))
 	})
 
+	It("removes padding", func() {
+		padded := []byte{1, 2, 3, 4, 4, 4, 4, 4}
+		Expect(operations.RemovePKCS7(padded, 8)).To(Equal([]byte{1, 2, 3, 4}))
+	})
+
+	It("leaves non-padding", func() {
+		padded := []byte{1, 2, 3, 4, 5, 4, 4, 4}
+		Expect(operations.RemovePKCS7(padded, 8)).To(Equal(padded))
+	})
+
 })

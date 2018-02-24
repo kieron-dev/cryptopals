@@ -1,8 +1,6 @@
 package operations_test
 
 import (
-	"fmt"
-
 	"github.com/kieron-pivotal/cryptopals/operations"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,7 +14,6 @@ var _ = Describe("Random", func() {
 
 		bytes2 := operations.RandomSlice(10)
 		Expect(bytes2).ToNot(Equal(bytes))
-		fmt.Println(bytes, bytes2)
 	})
 
 })

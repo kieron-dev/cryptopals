@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kieron-pivotal/cryptopals/conversion"
+	"github.com/kieron-pivotal/cryptopals/examples"
 	"github.com/kieron-pivotal/cryptopals/operations"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -44,6 +45,13 @@ var _ = Describe("CryptopalsSet02", func() {
 
 		Expect(countECB).To(BeNumerically(">", 0))
 		Expect(countCBC).To(BeNumerically(">", 0))
+	})
+
+	It("question 12", func() {
+		cookie := examples.GetAdminCookie()
+		hash := examples.DecryptCookie(cookie)
+		fmt.Println(hash)
+		Expect(hash["role"]).To(Equal("admin"))
 	})
 
 })

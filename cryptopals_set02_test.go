@@ -64,4 +64,10 @@ var _ = Describe("CryptopalsSet02", func() {
 		Expect(ret).To(ContainSubstring("I just drove by"))
 	})
 
+	It("question 15", func() {
+		padded := []byte("YELLOW SUBMAR")
+		padded = append(padded, []byte{3, 3, 2}...)
+		_, err := operations.RemovePKCS7Loudly(padded, 16)
+		Expect(err).To(MatchError(ContainSubstring("invalid padding")))
+	})
 })

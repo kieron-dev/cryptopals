@@ -1,6 +1,9 @@
 package operations
 
-import "bytes"
+import (
+	"bytes"
+	"errors"
+)
 
 func PKCS7(in []byte, blockSize int) []byte {
 	diff := (blockSize - (len(in) % blockSize)) % blockSize
@@ -9,16 +12,21 @@ func PKCS7(in []byte, blockSize int) []byte {
 }
 
 func RemovePKCS7(in []byte, blockSize int) []byte {
+	str, _ := RemovePKCS7Loudly(in, blockSize)
+	return str
+}
+
+func RemovePKCS7Loudly(in []byte, blockSize int) ([]byte, error) {
 	l := len(in)
 	lastByte := in[l-1]
 	if int(lastByte) > blockSize {
-		return in
+		return in, nil
 	}
 
 	for i := 1; i < int(lastByte); i++ {
 		if in[l-1-i] != lastByte {
-			return in
+			return in, errors.New("invalid padding")
 		}
 	}
-	return in[0 : l-int(lastByte)]
+	return in[0 : l-int(lastByte)], nil
 }

@@ -48,10 +48,20 @@ var _ = Describe("CryptopalsSet02", func() {
 	})
 
 	It("question 12", func() {
+		ret := examples.ECBBlockPrependerOracle(examples.ECBBlockPrependerEncode)
+		Expect(ret).To(ContainSubstring("I just drove by"))
+	})
+
+	It("question 13", func() {
 		cookie := examples.GetAdminCookie()
 		hash := examples.DecryptCookie(cookie)
 		fmt.Println(hash)
 		Expect(hash["role"]).To(Equal("admin"))
+	})
+
+	It("question 14", func() {
+		ret := examples.ECBBlockPrependerWithPrefixOracle(examples.ECBBlockPrependerEncodeWithPrefix)
+		Expect(ret).To(ContainSubstring("I just drove by"))
 	})
 
 })

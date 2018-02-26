@@ -9,7 +9,7 @@ import (
 	"github.com/kieron-pivotal/cryptopals/operations"
 )
 
-var kvKey []byte
+var kvKey = operations.RandomSlice(16)
 
 func ParseKVString(s string) map[string]string {
 	ret := map[string]string{}
@@ -57,9 +57,6 @@ func ProfileFor(email string) map[string]string {
 }
 
 func GetCookie(email string) []byte {
-	if kvKey == nil {
-		kvKey = operations.RandomSlice(16)
-	}
 	profile := ProfileFor(email)
 	str := EncodeKVs(profile)
 	enc, err := operations.AES128ECBEncode([]byte(str), kvKey)
@@ -70,9 +67,6 @@ func GetCookie(email string) []byte {
 }
 
 func DecryptCookie(cookie []byte) map[string]string {
-	if kvKey == nil {
-		panic("Key is not set")
-	}
 	clear, err := operations.AES128ECBDecode(cookie, kvKey)
 	if err != nil {
 		panic(err)

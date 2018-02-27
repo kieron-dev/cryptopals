@@ -68,6 +68,7 @@ func GetCookie(email string) []byte {
 
 func DecryptCookie(cookie []byte) map[string]string {
 	clear, err := operations.AES128ECBDecode(cookie, kvKey)
+	clear = operations.RemovePKCS7(clear, 16)
 	if err != nil {
 		panic(err)
 	}

@@ -52,15 +52,14 @@ func RepeatingXorDecrypt(in []byte) (clear, key string) {
 	return clear, string(probKey)
 }
 
-func AES128ECBEncode(in []byte, key []byte) (ciphertext []byte, err error) {
+func AES128ECBEncode(clear []byte, key []byte) (ciphertext []byte, err error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return []byte{}, err
 	}
 	blockSize := block.BlockSize()
-	clear := PKCS7(in, blockSize)
 
-	for i := 0; i*blockSize < len(in); i++ {
+	for i := 0; i*blockSize < len(clear); i++ {
 		slice := clear[i*blockSize : (i+1)*blockSize]
 		dst := make([]byte, blockSize)
 		block.Encrypt(dst, slice)
@@ -82,8 +81,8 @@ func AES128ECBDecode(in []byte, key []byte) (clear []byte, err error) {
 		block.Decrypt(dst, slice)
 		clear = append(clear, dst...)
 	}
-	out := RemovePKCS7(clear, blockSize)
-	return out, nil
+
+	return clear, nil
 }
 
 func AES128CBCEncode(in []byte, key []byte, iv []byte) (ciphertext []byte, err error) {

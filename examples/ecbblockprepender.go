@@ -24,6 +24,7 @@ var randomStart = operations.RandomSlice(rand.Intn(256))
 
 func ECBBlockPrependerEncode(in []byte) ([]byte, error) {
 	clear := append(in, secret...)
+	clear = operations.PKCS7(clear, 16)
 
 	ciphertext, err := operations.AES128ECBEncode(clear, key)
 	if err != nil {
@@ -44,6 +45,7 @@ func ECBBlockPrependerOracle(encoder func([]byte) ([]byte, error)) []byte {
 func ECBBlockPrependerEncodeWithPrefix(in []byte) ([]byte, error) {
 	clear := append(randomStart, in...)
 	clear = append(clear, secret...)
+	clear = operations.PKCS7(clear, 16)
 
 	ciphertext, err := operations.AES128ECBEncode(clear, key)
 	if err != nil {

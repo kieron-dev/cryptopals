@@ -70,4 +70,22 @@ var _ = Describe("CryptopalsSet02", func() {
 		_, err := operations.RemovePKCS7Loudly(padded, 16)
 		Expect(err).To(MatchError(ContainSubstring("invalid padding")))
 	})
+
+	It("question 16", func() {
+		enc := examples.EncodeUserdata(":admin<true:")
+
+		isAdmin := false
+		for i := 0; i < len(enc)-11; i++ {
+			newEnc := make([]byte, len(enc))
+			copy(newEnc, enc)
+			newEnc[i] ^= 1
+			newEnc[i+6] ^= 1
+			newEnc[i+11] ^= 1
+			if examples.IsAdmin(newEnc) {
+				isAdmin = true
+				break
+			}
+		}
+		Expect(isAdmin).To(BeTrue())
+	})
 })

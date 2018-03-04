@@ -3,13 +3,22 @@ package examples
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/kieron-pivotal/cryptopals/operations"
 )
 
-var kvKey = operations.RandomSlice(16)
+var (
+	kvKey []byte
+)
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+	kvKey = operations.RandomSlice(16)
+}
 
 func ParseKVString(s string) map[string]string {
 	ret := map[string]string{}

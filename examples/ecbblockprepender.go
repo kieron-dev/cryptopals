@@ -9,18 +9,27 @@ import (
 	"github.com/kieron-pivotal/cryptopals/operations"
 )
 
+var (
+	key         []byte
+	randomStart []byte
+	secret      []byte
+)
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
-}
-
-var secret, err = conversion.Base64ToBytes(
-	`Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
+	key = operations.RandomSlice(16)
+	randomStart = operations.RandomSlice(rand.Intn(256))
+	var err error
+	secret, err = conversion.Base64ToBytes(
+		`Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg
 aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq
 dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg
 YnkK`)
+	if err != nil {
+		panic(err)
+	}
 
-var key = operations.RandomSlice(16)
-var randomStart = operations.RandomSlice(rand.Intn(256))
+}
 
 func ECBBlockPrependerEncode(in []byte) ([]byte, error) {
 	clear := append(in, secret...)

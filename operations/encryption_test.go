@@ -2,6 +2,8 @@ package operations_test
 
 import (
 	"bytes"
+	"math/rand"
+	"time"
 
 	"github.com/kieron-pivotal/cryptopals/operations"
 	. "github.com/onsi/ginkgo"
@@ -41,6 +43,7 @@ var _ = Describe("Decrypt", func() {
 	})
 
 	It("can detect CBC or EBC in a black box", func() {
+		rand.Seed(time.Now().UnixNano())
 		key := operations.RandomSlice(16)
 		iv := operations.RandomSlice(16)
 

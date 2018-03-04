@@ -117,9 +117,9 @@ func AES128CBCDecode(ciphertext []byte, key []byte, iv []byte) (clear []byte, er
 }
 
 func AES128RandomEncode(clear []byte) (ciphertext []byte, err error) {
+	rand.Seed(time.Now().UnixNano())
 	key := RandomSlice(16)
 	iv := RandomSlice(16)
-	rand.Seed(time.Now().UnixNano())
 	preLen := 5 + rand.Intn(6)
 	postLen := 5 + rand.Intn(6)
 	preBytes := RandomSlice(preLen)

@@ -26,7 +26,7 @@ func RemovePKCS7Loudly(in []byte, blockSize int) ([]byte, error) {
 	}
 	lastByte := in[l-1]
 
-	if int(lastByte) > blockSize {
+	if int(lastByte) > blockSize || lastByte == 0 {
 		return in, errors.New("invalid padding")
 	}
 

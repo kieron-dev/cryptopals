@@ -55,6 +55,12 @@ var _ = Describe("Operations/Padding", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
+		It("complains about a final zero", func() {
+			finalZero := []byte{1, 2, 3, 4, 0}
+			_, err := operations.RemovePKCS7Loudly(finalZero, 5)
+			Expect(err).To(HaveOccurred())
+		})
+
 		It("complains about wrong pattern of padding", func() {
 			wrongPattern := []byte{1, 2, 3, 4, 3, 4, 3, 4}
 			_, err := operations.RemovePKCS7Loudly(wrongPattern, 8)

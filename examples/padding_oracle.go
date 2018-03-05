@@ -1,7 +1,6 @@
 package examples
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -43,6 +42,10 @@ func RandomClearText() []byte {
 	return cipherTexts[rand.Intn(len(cipherTexts))]
 }
 
+func EncodeRandomText() (enc, iv []byte) {
+	return EncodePaddedCBC(RandomClearText())
+}
+
 func EncodePaddedCBC(clear []byte) (enc, iv []byte) {
 	iv = operations.RandomSlice(16)
 	padded := operations.PKCS7(clear, 16)
@@ -63,50 +66,33 @@ func IsCorrectlyPadded(enc, iv []byte) bool {
 }
 
 func PaddingOracle(enc, iv []byte) []byte {
-	res := []byte{}
+	l := len(enc)
+	res := make([]byte, l)
 
-	const blocksize = 16
-	blocks := len(enc) / blocksize
+	blocksize := 16
 
-	blockToDecrypt := enc[(blocks-1)*blocksize : blocks*blocksize]
-	blockToManipulate := enc[(blocks-2)*blocksize : (blocks-1)*blocksize]
+	for block := l / blocksize; block > 0; block-- {
+		blockToCheck := enc[(block-1)*blocksize : block*blocksize]
+		blockToTweak := iv
+		if block > 1 {
+			blockToTweak = enc[(block-2)*blocksize : (block-1)*blocksize]
+		}
+		tweakBlock := make([]byte, blocksize)
 
-	cp := make([]byte, 16)
-	copy(cp, blockToManipulate)
+		for i := 0; i < 16; i++ {
+			for j := 0; j < i; j++ {
+				tweakBlock[15-j] = blockToTweak[15-j] ^ res[(block-1)*blocksize+15-j] ^ byte(i+1)
+			}
 
-	for t := 0; t < 256; t++ {
-		cp[15] ^= byte(t) ^ 1
-		if IsCorrectlyPadded(blockToDecrypt, cp) {
-			res = append([]byte{byte(t)}, res...)
-			fmt.Println("[", byte(t), "]")
-			break
+			for t := 0; t < 256; t++ {
+				tweakBlock[15-i] = blockToTweak[15-i] ^ byte(t) ^ byte(i+1)
+
+				if IsCorrectlyPadded(blockToCheck, tweakBlock) {
+					res[(block-1)*blocksize+15-i] = byte(t)
+					break
+				}
+			}
 		}
 	}
-	fmt.Println(res)
-
-	for t := 0; t < 256; t++ {
-		cp[15] ^= res[len(res)-1] ^ 2
-		cp[14] ^= byte(t) ^ 2
-		fmt.Println(cp)
-		if IsCorrectlyPadded(blockToDecrypt, cp) {
-			res = append([]byte{byte(t)}, res...)
-			fmt.Println(byte(t))
-			break
-		}
-	}
-	fmt.Println(res)
-
-	for t := 0; t < 256; t++ {
-		cp[15] ^= res[len(res)-1] ^ 3
-		cp[14] ^= res[len(res)-2] ^ 3
-		cp[13] ^= byte(t) ^ 3
-		fmt.Println(cp)
-		if IsCorrectlyPadded(blockToDecrypt, cp) {
-			res = append([]byte{byte(t)}, res...)
-			fmt.Println(byte(t))
-			break
-		}
-	}
-	fmt.Println(res)
 	return res
 }

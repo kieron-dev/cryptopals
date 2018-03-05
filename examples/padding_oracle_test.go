@@ -1,7 +1,6 @@
 package examples_test
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/kieron-pivotal/cryptopals/operations"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -34,15 +34,19 @@ var _ = Describe("PaddingOracle", func() {
 		Expect(examples.IsCorrectlyPadded(enc, iv)).To(BeFalse())
 	})
 
-	FIt("can decrypt the last byte of a single blocksize enc", func() {
-		clear := "Hi, my name is K"
-		enc, iv := examples.EncodePaddedCBC([]byte(clear))
+	DescribeTable("can decrypt various strings",
+		func(clear string) {
+			enc, iv := examples.EncodePaddedCBC([]byte(clear))
 
-		hacked := examples.PaddingOracle(enc, iv)
-		fmt.Println(string(hacked))
-		Expect(hacked[len(hacked)-1]).To(Equal(byte('K')))
-		Expect(hacked[len(hacked)-2]).To(Equal(byte(' ')))
-	})
+			hacked := examples.PaddingOracle(enc, iv)
+			unpadded := operations.RemovePKCS7(hacked, 16)
+			Expect(string(unpadded)).To(Equal(clear))
+		},
+		Entry("stuff", "stuff"),
+		Entry("Hello, World!", "Hello, World!"),
+		Entry("", ""),
+		Entry("123456781234567812345678", "123456781234567812345678"),
+	)
 
 	XIt("can decrypt using padding oracle", func() {
 		enc, iv := examples.EncodePaddedCBC([]byte("Yellow Submarine"))

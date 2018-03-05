@@ -28,6 +28,7 @@ var (
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	for _, b64 := range encB64s {
 		cipherText, err := conversion.Base64ToBytes(b64)
 		if err != nil {
@@ -42,76 +43,70 @@ func RandomClearText() []byte {
 	return cipherTexts[rand.Intn(len(cipherTexts))]
 }
 
-func RandomEncodePaddedCBC(key []byte) (enc, iv []byte) {
-	rand.Seed(time.Now().UnixNano())
-	clear := RandomClearText()
+func EncodePaddedCBC(clear []byte) (enc, iv []byte) {
 	iv = operations.RandomSlice(16)
 	padded := operations.PKCS7(clear, 16)
-	enc, err := operations.AES128CBCEncode(padded, key, iv)
+	enc, err := operations.AES128CBCEncode(padded, paddingOracleKey, iv)
 	if err != nil {
 		panic(err)
 	}
-	c, err := operations.AES128CBCDecode(enc, key, iv)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("---")
-	fmt.Println(string(padded), string(c))
-	fmt.Println("---")
 	return enc, iv
 }
 
-func IsCorrectlyPadded(enc, key, iv []byte) bool {
-	padded, err := operations.AES128CBCDecode(enc, key, iv)
+func IsCorrectlyPadded(enc, iv []byte) bool {
+	padded, err := operations.AES128CBCDecode(enc, paddingOracleKey, iv)
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Println(string(padded))
 	_, err = operations.RemovePKCS7Loudly(padded, 16)
 	return err == nil
 }
 
-func PaddingOracle(enc, key, iv []byte) []byte {
-	if len(enc) != 16 {
-		panic("can only do 16 bytes at the moment")
-	}
-
+func PaddingOracle(enc, iv []byte) []byte {
 	res := []byte{}
 
+	const blocksize = 16
+	blocks := len(enc) / blocksize
+
+	blockToDecrypt := enc[(blocks-1)*blocksize : blocks*blocksize]
+	blockToManipulate := enc[(blocks-2)*blocksize : (blocks-1)*blocksize]
+
+	cp := make([]byte, 16)
+	copy(cp, blockToManipulate)
+
 	for t := 0; t < 256; t++ {
-		cp := make([]byte, 16)
-		copy(cp, iv)
 		cp[15] ^= byte(t) ^ 1
-		if IsCorrectlyPadded(enc, key, cp) {
+		if IsCorrectlyPadded(blockToDecrypt, cp) {
 			res = append([]byte{byte(t)}, res...)
-			fmt.Println(byte(t))
+			fmt.Println("[", byte(t), "]")
 			break
 		}
 	}
+	fmt.Println(res)
 
 	for t := 0; t < 256; t++ {
-		cp := make([]byte, 16)
-		copy(cp, iv)
 		cp[15] ^= res[len(res)-1] ^ 2
 		cp[14] ^= byte(t) ^ 2
-		if IsCorrectlyPadded(enc, key, cp) {
+		fmt.Println(cp)
+		if IsCorrectlyPadded(blockToDecrypt, cp) {
 			res = append([]byte{byte(t)}, res...)
 			fmt.Println(byte(t))
 			break
 		}
 	}
+	fmt.Println(res)
 
 	for t := 0; t < 256; t++ {
-		cp := make([]byte, 16)
-		copy(cp, iv)
 		cp[15] ^= res[len(res)-1] ^ 3
 		cp[14] ^= res[len(res)-2] ^ 3
 		cp[13] ^= byte(t) ^ 3
-		if IsCorrectlyPadded(enc, key, cp) {
+		fmt.Println(cp)
+		if IsCorrectlyPadded(blockToDecrypt, cp) {
 			res = append([]byte{byte(t)}, res...)
 			fmt.Println(byte(t))
 			break
 		}
 	}
+	fmt.Println(res)
 	return res
 }

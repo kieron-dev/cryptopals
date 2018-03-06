@@ -38,7 +38,7 @@ var _ = Describe("PaddingOracle", func() {
 		func(clear string) {
 			enc, iv := examples.EncodePaddedCBC([]byte(clear))
 
-			hacked := examples.PaddingOracle(enc, iv)
+			hacked := examples.PaddingOracle(enc, iv, examples.IsCorrectlyPadded)
 			unpadded := operations.RemovePKCS7(hacked, 16)
 			Expect(string(unpadded)).To(Equal(clear))
 		},

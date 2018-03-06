@@ -65,7 +65,7 @@ func IsCorrectlyPadded(enc, iv []byte) bool {
 	return err == nil
 }
 
-func PaddingOracle(enc, iv []byte) []byte {
+func PaddingOracle(enc, iv []byte, isCorrectlyPadded func(enc, iv []byte) bool) []byte {
 	l := len(enc)
 	res := make([]byte, l)
 
@@ -85,7 +85,7 @@ func PaddingOracle(enc, iv []byte) []byte {
 			for t := 0; t < 256; t++ {
 				tweakBlock[blocksize-1-i] = blockToTweak[blocksize-1-i] ^ byte(t) ^ byte(i+1)
 
-				if IsCorrectlyPadded(blockToCheck, tweakBlock) {
+				if isCorrectlyPadded(blockToCheck, tweakBlock) {
 					res[block*blocksize-1-i] = byte(t)
 					break
 				}

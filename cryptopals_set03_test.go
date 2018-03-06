@@ -13,7 +13,7 @@ var _ = Describe("CryptopalsSet03", func() {
 
 	It("question 17", func() {
 		enc, iv := examples.EncodeRandomText()
-		clear := examples.PaddingOracle(enc, iv)
+		clear := examples.PaddingOracle(enc, iv, examples.IsCorrectlyPadded)
 
 		fmt.Println("---")
 		fmt.Println(string(operations.RemovePKCS7(clear, 16)))

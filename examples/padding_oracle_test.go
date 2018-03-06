@@ -48,9 +48,4 @@ var _ = Describe("PaddingOracle", func() {
 		Entry("123456781234567812345678", "123456781234567812345678"),
 	)
 
-	XIt("can decrypt using padding oracle", func() {
-		enc, iv := examples.EncodePaddedCBC([]byte("Yellow Submarine"))
-		Expect(examples.PaddingOracle(enc, iv)).To(Equal([]byte("Yellow Submarine")))
-	})
-
 })

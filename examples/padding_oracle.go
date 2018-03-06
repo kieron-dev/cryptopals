@@ -35,7 +35,7 @@ func init() {
 		}
 		cipherTexts = append(cipherTexts, cipherText)
 	}
-	paddingOracleKey = operations.RandomSlice(16)
+	paddingOracleKey = operations.RandomSlice(blocksize)
 }
 
 func RandomClearText() []byte {
@@ -47,8 +47,8 @@ func EncodeRandomText() (enc, iv []byte) {
 }
 
 func EncodePaddedCBC(clear []byte) (enc, iv []byte) {
-	iv = operations.RandomSlice(16)
-	padded := operations.PKCS7(clear, 16)
+	iv = operations.RandomSlice(blocksize)
+	padded := operations.PKCS7(clear, blocksize)
 	enc, err := operations.AES128CBCEncode(padded, paddingOracleKey, iv)
 	if err != nil {
 		panic(err)
@@ -61,15 +61,13 @@ func IsCorrectlyPadded(enc, iv []byte) bool {
 	if err != nil {
 		panic(err)
 	}
-	_, err = operations.RemovePKCS7Loudly(padded, 16)
+	_, err = operations.RemovePKCS7Loudly(padded, blocksize)
 	return err == nil
 }
 
 func PaddingOracle(enc, iv []byte) []byte {
 	l := len(enc)
 	res := make([]byte, l)
-
-	blocksize := 16
 
 	for block := l / blocksize; block > 0; block-- {
 		blockToCheck := enc[(block-1)*blocksize : block*blocksize]
@@ -79,16 +77,16 @@ func PaddingOracle(enc, iv []byte) []byte {
 		}
 		tweakBlock := make([]byte, blocksize)
 
-		for i := 0; i < 16; i++ {
+		for i := 0; i < blocksize; i++ {
 			for j := 0; j < i; j++ {
-				tweakBlock[15-j] = blockToTweak[15-j] ^ res[(block-1)*blocksize+15-j] ^ byte(i+1)
+				tweakBlock[blocksize-1-j] = blockToTweak[blocksize-1-j] ^ res[block*blocksize-1-j] ^ byte(i+1)
 			}
 
 			for t := 0; t < 256; t++ {
-				tweakBlock[15-i] = blockToTweak[15-i] ^ byte(t) ^ byte(i+1)
+				tweakBlock[blocksize-1-i] = blockToTweak[blocksize-1-i] ^ byte(t) ^ byte(i+1)
 
 				if IsCorrectlyPadded(blockToCheck, tweakBlock) {
-					res[(block-1)*blocksize+15-i] = byte(t)
+					res[block*blocksize-1-i] = byte(t)
 					break
 				}
 			}

@@ -13,14 +13,14 @@ import (
 func SingleCharXorDecrypt(in []byte) (clear string, xorByte byte, score float64) {
 	score = 1e20
 
-	for b := byte(0); b < byte(127); b++ {
-		xorBytes := []byte{b}
+	for b := 0; b < 256; b++ {
+		xorBytes := []byte{byte(b)}
 		xored := Xor(in, xorBytes)
 		sc := freqanal.FreqScoreEnglish(string(xored))
 		if sc < score {
 			score = sc
 			clear = string(xored)
-			xorByte = b
+			xorByte = byte(b)
 		}
 	}
 

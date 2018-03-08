@@ -4,6 +4,9 @@ func Xor(bytes1, bytes2 []byte) []byte {
 	ret := []byte{}
 
 	l2 := len(bytes2)
+	if l2 == 0 {
+		return ret
+	}
 
 	for i, b0 := range bytes1 {
 		b1 := bytes2[i%l2]

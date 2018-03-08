@@ -27,7 +27,8 @@ func FreqScoreEnglish(in string) float64 {
 		} else if r >= 'A' && r <= 'Z' {
 			freqs[int(r-'A')]++
 			l++
-		} else if r == ',' || r == '.' || r == '\'' || r == ' ' {
+		} else if r == ',' || r == '.' || r == '\'' || r == ' ' ||
+			r == '?' || r == ':' || r == ';' {
 			l++
 		} else if r >= 32 && r <= 126 {
 			ignored++

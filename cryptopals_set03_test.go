@@ -95,6 +95,27 @@ var _ = Describe("CryptopalsSet03", func() {
 		fmt.Println(strings.Repeat("0 1 2 3 4 5 6 7 8 9 ", 3))
 		printDecryption(encs, attempt)
 	})
+
+	It("question 20", func() {
+		encs := examples.EncryptList()
+
+		minLength := 10000
+		for _, r := range encs {
+			if len(r) < minLength {
+				minLength = len(r)
+			}
+		}
+
+		buf := []byte{}
+		for _, r := range encs {
+			buf = append(buf, r[:minLength]...)
+		}
+
+		clear, _ := operations.RepeatingXorDecrypt(buf)
+		fmt.Println("---")
+		fmt.Println(clear)
+		fmt.Println("---")
+	})
 })
 
 func initAttempt(enc [][]byte) [][]byte {

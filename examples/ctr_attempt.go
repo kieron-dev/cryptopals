@@ -23,7 +23,7 @@ func init() {
 }
 
 func EncryptList() [][]byte {
-	file, err := os.Open("../assets/03_19.txt")
+	file, err := os.Open("assets/03_19.txt")
 	if err != nil {
 		panic(err)
 	}

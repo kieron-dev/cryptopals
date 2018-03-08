@@ -112,6 +112,7 @@ var _ = Describe("CryptopalsSet03", func() {
 		}
 
 		clear, _ := operations.RepeatingXorDecrypt(buf)
+		Expect(clear).To(ContainSubstring("the knowledge"))
 
 		for len(clear) > 0 {
 			fmt.Println(clear[:minLength])

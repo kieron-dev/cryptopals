@@ -1,9 +1,5 @@
 package freqanal
 
-import (
-	"strings"
-)
-
 var runeOrders map[rune]int
 var expectedProportions = []float64{
 	0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015,
@@ -12,15 +8,18 @@ var expectedProportions = []float64{
 	0.00978, 0.02360, 0.00150, 0.01974, 0.00074,
 }
 
-func FreqScoreEnglish(in string) float64 {
+func FreqScoreEnglish(in []byte) float64 {
 
-	s := strings.ToLower(in)
 	freqs := map[int]float64{}
 
 	l := float64(0)
 	ignored := 0
 
-	for _, r := range s {
+	for _, r := range in {
+		if r >= 'A' && r <= 'Z' {
+			r += 'a' - 'A'
+		}
+
 		if r >= 'a' && r <= 'z' {
 			freqs[int(r-'a')]++
 			l++

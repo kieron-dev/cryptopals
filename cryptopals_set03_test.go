@@ -46,7 +46,7 @@ var _ = Describe("CryptopalsSet03", func() {
 	})
 
 	It("question 19", func() {
-		encs := examples.EncryptList()
+		encs := examples.EncryptList("./assets/03_19.txt")
 
 		attempt := initAttempt(encs)
 
@@ -97,7 +97,7 @@ var _ = Describe("CryptopalsSet03", func() {
 	})
 
 	It("question 20", func() {
-		encs := examples.EncryptList()
+		encs := examples.EncryptList("./assets/03_20.txt")
 
 		minLength := 10000
 		for _, r := range encs {
@@ -112,9 +112,11 @@ var _ = Describe("CryptopalsSet03", func() {
 		}
 
 		clear, _ := operations.RepeatingXorDecrypt(buf)
-		fmt.Println("---")
-		fmt.Println(clear)
-		fmt.Println("---")
+
+		for len(clear) > 0 {
+			fmt.Println(clear[:minLength])
+			clear = clear[minLength:]
+		}
 	})
 })
 

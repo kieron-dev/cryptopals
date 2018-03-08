@@ -37,8 +37,8 @@ func KeyLengthHammingDistance(b []byte, l int) float64 {
 
 func ProbableKeyLengths(b []byte) []int {
 	lim := len(b) / 4
-	if lim > 40 {
-		lim = 40
+	if lim > 80 {
+		lim = 80
 	}
 
 	type lengthPair struct {

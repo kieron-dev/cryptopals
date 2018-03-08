@@ -22,8 +22,8 @@ func init() {
 	counter = ctr.Counter{Nonce: operations.RandomSlice(8)}
 }
 
-func EncryptList() [][]byte {
-	file, err := os.Open("./assets/03_19.txt")
+func EncryptList(filename string) [][]byte {
+	file, err := os.Open(filename)
 	if err != nil {
 		panic(err)
 	}

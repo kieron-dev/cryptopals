@@ -9,9 +9,9 @@ import (
 var _ = Describe("English", func() {
 
 	It("scores on letter frequency", func() {
-		normalScore := freqanal.FreqScoreEnglish("This is a normal sentence")
-		forcedScore := freqanal.FreqScoreEnglish("The quick brown dogs jumped over teh lazy fox")
-		randomScore := freqanal.FreqScoreEnglish("&6%4dsfhk223sdoi s dfhjsfdl12*&ydas")
+		normalScore := freqanal.FreqScoreEnglish([]byte("This is a normal sentence"))
+		forcedScore := freqanal.FreqScoreEnglish([]byte("The quick brown dogs jumped over the lazy fox"))
+		randomScore := freqanal.FreqScoreEnglish([]byte("&6%4dsfhk223sdoi s dfhjsfdl12*&ydas"))
 
 		Expect(normalScore).To(BeNumerically("<", forcedScore))
 		Expect(forcedScore).To(BeNumerically("<", randomScore))

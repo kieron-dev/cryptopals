@@ -16,7 +16,7 @@ func SingleCharXorDecrypt(in []byte) (clear string, xorByte byte, score float64)
 	for b := 0; b < 256; b++ {
 		xorBytes := []byte{byte(b)}
 		xored := Xor(in, xorBytes)
-		sc := freqanal.FreqScoreEnglish(string(xored))
+		sc := freqanal.FreqScoreEnglish(xored)
 		if sc < score {
 			score = sc
 			clear = string(xored)

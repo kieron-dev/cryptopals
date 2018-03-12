@@ -3,12 +3,15 @@ package cryptopals_test
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/kieron-pivotal/cryptopals/conversion"
 	"github.com/kieron-pivotal/cryptopals/ctr"
 	"github.com/kieron-pivotal/cryptopals/examples"
 	"github.com/kieron-pivotal/cryptopals/operations"
+	"github.com/kieron-pivotal/cryptopals/prng"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -118,6 +121,29 @@ var _ = Describe("CryptopalsSet03", func() {
 			fmt.Println(clear[:minLength])
 			clear = clear[minLength:]
 		}
+	})
+
+	It("question 22", func() {
+		rand.Seed(time.Now().UnixNano())
+		time.Sleep(time.Duration(rand.Intn(960)+40) * time.Second)
+		rng := prng.New(uint32(time.Now().Unix()))
+		r := rng.Next()
+		time.Sleep(time.Duration(rand.Intn(960)+40) * time.Second)
+
+		now := uint32(time.Now().Unix())
+
+		foundIt := false
+		for i := uint32(0); i < 1100; i++ {
+			seed := now - i
+			rnd := prng.New(seed)
+			if rnd.Next() == r {
+				foundIt = true
+				fmt.Printf("Seed was %d\n", seed)
+				break
+			}
+		}
+
+		Expect(foundIt).To(BeTrue(), "found the seed")
 	})
 })
 

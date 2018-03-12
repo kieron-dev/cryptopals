@@ -38,20 +38,19 @@ func (g *Mersenne) Next() uint32 {
 	if g.pos == n {
 		g.twist()
 	}
-	ret := g.x[g.pos]
+	ret := temper(g.x[g.pos])
 	g.pos++
 	return ret
 }
 
 func (g *Mersenne) twist() {
-	umask := (uint32(1)<<u - 1) << (w - u - 1)
-	lmask := uint32(1)<<l - 1
+	umask := (uint32(1)<<(w-r) - 1) << r
+	lmask := uint32(1)<<r - 1
 
 	g.x = append(g.x, make([]uint32, n)...)
-	for k := uint32(0); k < w; k++ {
+	for k := uint32(0); k < n; k++ {
 		maskedAdd := (g.x[k] & umask) | (g.x[k+1] & lmask)
-		next := g.x[m+k] ^ rightApplyA(maskedAdd)
-		g.x[n+k] = temper(next)
+		g.x[n+k] = g.x[m+k] ^ rightApplyA(maskedAdd)
 	}
 
 	g.x = g.x[n:]
@@ -59,16 +58,16 @@ func (g *Mersenne) twist() {
 }
 
 func rightApplyA(x uint32) uint32 {
-	if x&1 == 1 {
+	if x&1 == 0 {
 		return x >> 1
 	}
 	return (x >> 1) ^ a
 }
 
 func temper(x uint32) uint32 {
-	next := x ^ (x>>u)&d
-	next = next ^ (next<<s)&b
-	next = next ^ (next<<t)&c
+	next := x ^ ((x >> u) & d)
+	next = next ^ ((next << s) & b)
+	next = next ^ ((next << t) & c)
 	next = next ^ (next >> l)
 	return next
 }

@@ -2,6 +2,8 @@ package prng_test
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/kieron-pivotal/cryptopals/prng"
 	. "github.com/onsi/ginkgo"
@@ -52,4 +54,58 @@ var _ = Describe("Mersenne", func() {
 			d[r] = true
 		}
 	})
+
+	It("can undo a xor-rshift-and", func() {
+		rand.Seed(time.Now().UnixNano())
+		in := rand.Uint32()
+		s := rand.Intn(8) + 2
+		a := rand.Uint32()
+		res := prng.XorRshiftAnd(in, uint32(s), a)
+		undone := prng.UndoXorRshiftAnd(res, uint32(s), a)
+		Expect(undone).To(Equal(in))
+	})
+
+	It("can undo a xor-lshift-and", func() {
+		rand.Seed(time.Now().UnixNano())
+		in := rand.Uint32()
+		s := rand.Intn(8) + 2
+		a := rand.Uint32()
+		res := prng.XorLshiftAnd(in, uint32(s), a)
+		undone := prng.UndoXorLshiftAnd(res, uint32(s), a)
+		Expect(undone).To(Equal(in))
+	})
+
+	It("can detemper a temper", func() {
+		in := uint32(1231548362)
+		t := prng.Temper(in)
+		Expect(prng.Detemper(t)).To(Equal(in))
+	})
+
+	It("can be seeded with 264 uint32s", func() {
+		mer := prng.Mersenne{}
+		seed := []uint32{}
+		rand.Seed(time.Now().UnixNano())
+		for i := 0; i < 624; i++ {
+			seed = append(seed, rand.Uint32())
+		}
+		mer.Seed(seed)
+		mer.Next()
+		Expect(true).To(BeTrue(), "didn't panic")
+	})
+
+	It("can be cloned", func() {
+		rand.Seed(time.Now().UnixNano())
+		mer1 := prng.New(rand.Uint32())
+		var seed []uint32
+		for i := 0; i < 624; i++ {
+			seed = append(seed, prng.Detemper(mer1.Next()))
+		}
+		mer2 := prng.Mersenne{}
+		mer2.Seed(seed)
+
+		for i := 0; i < 1000; i++ {
+			Expect(mer2.Next()).To(Equal(mer1.Next()))
+		}
+	})
+
 })

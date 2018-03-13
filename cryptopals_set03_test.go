@@ -123,7 +123,7 @@ var _ = Describe("CryptopalsSet03", func() {
 		}
 	})
 
-	It("question 22", func() {
+	XIt("question 22", func() {
 		rand.Seed(time.Now().UnixNano())
 		time.Sleep(time.Duration(rand.Intn(960)+40) * time.Second)
 		rng := prng.New(uint32(time.Now().Unix()))
@@ -144,6 +144,21 @@ var _ = Describe("CryptopalsSet03", func() {
 		}
 
 		Expect(foundIt).To(BeTrue(), "found the seed")
+	})
+
+	It("question 23 - cloning a MT19937", func() {
+		rand.Seed(time.Now().UnixNano())
+		mer1 := prng.New(rand.Uint32())
+		var seed []uint32
+		for i := 0; i < 624; i++ {
+			seed = append(seed, prng.Detemper(mer1.Next()))
+		}
+		mer2 := prng.Mersenne{}
+		mer2.Seed(seed)
+
+		for i := 0; i < 1000; i++ {
+			Expect(mer2.Next()).To(Equal(mer1.Next()))
+		}
 	})
 })
 

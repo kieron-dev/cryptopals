@@ -1,5 +1,7 @@
 package prng
 
+import "fmt"
+
 const (
 	w uint32 = 32
 	n uint32 = 624
@@ -34,11 +36,19 @@ func New(seed uint32) *Mersenne {
 	return &m
 }
 
+func (g *Mersenne) Seed(seed []uint32) {
+	if len(seed) != int(n) {
+		panic(fmt.Sprintf("wrong seed length: %d", len(seed)))
+	}
+	g.x = seed
+	g.pos = n
+}
+
 func (g *Mersenne) Next() uint32 {
 	if g.pos == n {
 		g.twist()
 	}
-	ret := temper(g.x[g.pos])
+	ret := Temper(g.x[g.pos])
 	g.pos++
 	return ret
 }
@@ -64,10 +74,48 @@ func rightApplyA(x uint32) uint32 {
 	return (x >> 1) ^ a
 }
 
-func temper(x uint32) uint32 {
-	next := x ^ ((x >> u) & d)
-	next = next ^ ((next << s) & b)
-	next = next ^ ((next << t) & c)
-	next = next ^ (next >> l)
-	return next
+func Temper(x uint32) uint32 {
+	next := XorRshiftAnd(x, u, d)
+	next = XorLshiftAnd(next, s, b)
+	next = XorLshiftAnd(next, t, c)
+	return XorRshiftAnd(next, l, ^uint32(0))
+}
+
+func Detemper(z uint32) uint32 {
+	w := UndoXorRshiftAnd(z, l, ^uint32(0))
+	w = UndoXorLshiftAnd(w, t, c)
+	w = UndoXorLshiftAnd(w, s, b)
+	return UndoXorRshiftAnd(w, u, d)
+}
+
+func XorRshiftAnd(x, s, a uint32) uint32 {
+	return x ^ x>>s&a
+}
+
+func XorLshiftAnd(x, s, a uint32) uint32 {
+	return x ^ x<<s&a
+}
+
+func UndoXorRshiftAnd(r, s, a uint32) uint32 {
+	correctBits := s
+	w := r
+	for correctBits < 32 {
+		w >>= s
+		w &= a
+		w = r ^ w
+		correctBits += s
+	}
+	return w
+}
+
+func UndoXorLshiftAnd(r, s, a uint32) uint32 {
+	correctBits := s
+	w := r
+	for correctBits < 32 {
+		w <<= s
+		w &= a
+		w = r ^ w
+		correctBits += s
+	}
+	return w
 }

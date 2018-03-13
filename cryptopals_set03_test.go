@@ -149,10 +149,17 @@ var _ = Describe("CryptopalsSet03", func() {
 	It("question 23 - cloning a MT19937", func() {
 		rand.Seed(time.Now().UnixNano())
 		mer1 := prng.New(rand.Uint32())
+
+		rollForwardNum := rand.Intn(200) + 10
+		for i := 0; i < rollForwardNum; i++ {
+			mer1.Next()
+		}
+
 		var seed []uint32
 		for i := 0; i < 624; i++ {
 			seed = append(seed, prng.Detemper(mer1.Next()))
 		}
+
 		mer2 := prng.Mersenne{}
 		mer2.Seed(seed)
 

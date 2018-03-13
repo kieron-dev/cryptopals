@@ -82,40 +82,40 @@ func Temper(x uint32) uint32 {
 }
 
 func Detemper(z uint32) uint32 {
-	w := UndoXorRshiftAnd(z, l, ^uint32(0))
-	w = UndoXorLshiftAnd(w, t, c)
-	w = UndoXorLshiftAnd(w, s, b)
-	return UndoXorRshiftAnd(w, u, d)
+	work := UndoXorRshiftAnd(z, l, ^uint32(0))
+	work = UndoXorLshiftAnd(work, t, c)
+	work = UndoXorLshiftAnd(work, s, b)
+	return UndoXorRshiftAnd(work, u, d)
 }
 
-func XorRshiftAnd(x, s, a uint32) uint32 {
-	return x ^ x>>s&a
+func XorRshiftAnd(x, shift, and uint32) uint32 {
+	return x ^ x>>shift&and
 }
 
-func XorLshiftAnd(x, s, a uint32) uint32 {
-	return x ^ x<<s&a
+func XorLshiftAnd(x, shift, and uint32) uint32 {
+	return x ^ x<<shift&and
 }
 
-func UndoXorRshiftAnd(r, s, a uint32) uint32 {
-	correctBits := s
-	w := r
+func UndoXorRshiftAnd(prevRes, shift, and uint32) uint32 {
+	correctBits := shift
+	work := prevRes
 	for correctBits < 32 {
-		w >>= s
-		w &= a
-		w = r ^ w
-		correctBits += s
+		work >>= shift
+		work &= and
+		work = prevRes ^ work
+		correctBits += shift
 	}
-	return w
+	return work
 }
 
-func UndoXorLshiftAnd(r, s, a uint32) uint32 {
-	correctBits := s
-	w := r
+func UndoXorLshiftAnd(prevRes, shift, and uint32) uint32 {
+	correctBits := shift
+	work := prevRes
 	for correctBits < 32 {
-		w <<= s
-		w &= a
-		w = r ^ w
-		correctBits += s
+		work <<= shift
+		work &= and
+		work = prevRes ^ work
+		correctBits += shift
 	}
-	return w
+	return work
 }

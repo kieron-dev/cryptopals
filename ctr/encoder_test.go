@@ -27,4 +27,20 @@ var _ = Describe("Encoder", func() {
 		Expect(decoded).To(Equal([]byte(clear)))
 	})
 
+	It("can edit an encrypted text", func() {
+		clear := "My name is Kieron"
+
+		rand.Seed(time.Now().UnixNano())
+		key := operations.RandomSlice(16)
+		counter := ctr.Counter{Nonce: operations.RandomSlice(8)}
+
+		enc := ctr.Encode([]byte(clear), key, counter)
+
+		edited := ctr.Edit(enc, key, 11, []byte("Ciara"), counter)
+
+		counter.BlockCount = 0
+		decoded := ctr.Encode(edited, key, counter)
+		Expect(string(decoded)).To(ContainSubstring("Ciaran"))
+	})
+
 })

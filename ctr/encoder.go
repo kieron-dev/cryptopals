@@ -31,3 +31,33 @@ func Encode(clear, key []byte, stream Counter) []byte {
 
 	return ret
 }
+
+func Edit(ciphertext, key []byte, offset int, newtext []byte, c Counter) []byte {
+	bs := aes.BlockSize
+	c.BlockCount = offset / bs
+
+	encStream := []byte{}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+
+	for c.BlockCount*bs < offset+len(newtext) {
+		dst := make([]byte, bs)
+		block.Encrypt(dst, c.Bytes())
+		encStream = append(encStream, dst...)
+		c.Inc()
+	}
+
+	encStream = encStream[offset%bs:]
+	encStream = encStream[:len(newtext)]
+	enc := operations.Xor(newtext, encStream)
+
+	ret := make([]byte, len(ciphertext))
+	copy(ret, ciphertext)
+	for i := 0; i < len(newtext); i++ {
+		ret[offset+i] = enc[i]
+	}
+	return ret
+}

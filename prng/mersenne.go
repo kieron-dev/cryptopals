@@ -56,7 +56,6 @@ func (g *Mersenne) Next() uint32 {
 func (g *Mersenne) twist() {
 	umask := (uint32(1)<<(w-r) - 1) << r
 	lmask := uint32(1)<<r - 1
-
 	g.x = append(g.x, make([]uint32, n)...)
 	for k := uint32(0); k < n; k++ {
 		maskedAdd := (g.x[k] & umask) | (g.x[k+1] & lmask)

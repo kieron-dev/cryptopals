@@ -167,6 +167,29 @@ var _ = Describe("CryptopalsSet03", func() {
 			Expect(mer2.Next()).To(Equal(mer1.Next()))
 		}
 	})
+
+	It("question 24 - can crack a prng stream seed", func() {
+		rand.Seed(time.Now().UnixNano())
+		seed := rand.Intn(1 << 16)
+		clear := bytes.Repeat([]byte{'A'}, 14)
+		ciphertext := prng.EncodeWithRandomPrefix(clear, uint16(seed))
+
+		crackedSeed, err := prng.GuessSeed(ciphertext, clear)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(crackedSeed).To(Equal(uint16(seed)))
+	})
+
+	XIt("can guess a password reset token", func() {
+		email := "user@example.com"
+		token := prng.PasswordResetToken(email)
+		rand.Seed(time.Now().UnixNano())
+		secs := rand.Intn(5) + 2
+		time.Sleep(time.Duration(secs) * time.Second)
+		seed, err := prng.GuessResetTokenSeed(token, email)
+		Expect(err).NotTo(HaveOccurred())
+		decoded := prng.Decode(token, seed)
+		fmt.Printf("decoded = %+v\n", string(decoded))
+	})
 })
 
 func initAttempt(enc [][]byte) [][]byte {

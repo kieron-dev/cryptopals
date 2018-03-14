@@ -64,4 +64,17 @@ var _ = Describe("Decrypt", func() {
 		}
 		Expect(operations.DetectBlockSize(encoder)).To(Equal(16))
 	})
+
+	It("can detect high ascii in clear", func() {
+		clear := "foo bar"
+		clear += string(200)
+		padded := operations.PKCS7([]byte(clear), 16)
+		key := operations.RandomSlice(16)
+		iv := operations.RandomSlice(16)
+		enc, err := operations.AES128CBCEncode(padded, key, iv)
+		Expect(err).NotTo(HaveOccurred())
+		ok, out := operations.AES128CBCSaneDecode(enc, key, iv)
+		Expect(ok).To(BeFalse())
+		Expect(out).To(Equal([]byte(padded)))
+	})
 })

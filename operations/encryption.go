@@ -116,6 +116,25 @@ func AES128CBCDecode(ciphertext []byte, key []byte, iv []byte) (clear []byte, er
 	return clear, nil
 }
 
+func AES128CBCSaneDecode(ciphertext, key, iv []byte) (ok bool, offendingClear []byte) {
+	clear, err := AES128CBCDecode(ciphertext, key, iv)
+	if err != nil {
+		panic("couldn't decrypt")
+	}
+
+	ok = true
+	for _, b := range clear {
+		if b > 127 {
+			ok = false
+			break
+		}
+	}
+	if !ok {
+		return ok, clear
+	}
+	return true, nil
+}
+
 func AES128RandomEncode(clear []byte) (ciphertext []byte, err error) {
 	rand.Seed(time.Now().UnixNano())
 	key := RandomSlice(16)

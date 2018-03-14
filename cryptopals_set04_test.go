@@ -31,4 +31,14 @@ var _ = Describe("CryptopalsSet04", func() {
 		newclear := operations.Xor(stream, enc)
 		Expect(newclear).To(Equal(clear))
 	})
+
+	It("question 26 - can bit fiddle in CTR", func() {
+		enc := ctr.ExampleToken(" admin true ")
+		pos, err := ctr.GetVarInputPos()
+		Expect(err).NotTo(HaveOccurred())
+		enc[pos] ^= ' ' ^ ';'
+		enc[pos+6] ^= ' ' ^ '='
+		enc[pos+11] ^= ' ' ^ ';'
+		Expect(ctr.CheckForAdmin(enc)).To(BeTrue())
+	})
 })

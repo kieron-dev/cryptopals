@@ -184,21 +184,6 @@ func (d *digest) checkSum() [Size]byte {
 }
 
 func (d *digest) checkSumNoPad() [Size]byte {
-	len := d.len
-	// Padding.  Add a 1 bit and 0 bits until 56 bytes mod 64.
-	var tmp [64]byte
-	tmp[0] = 0x80
-	if len%64 < 56 {
-		d.Write(tmp[0 : 56-len%64])
-	} else {
-		d.Write(tmp[0 : 64+56-len%64])
-	}
-
-	// Length in bits.
-	len <<= 3
-	putUint64(tmp[:], len)
-	d.Write(tmp[0:8])
-
 	if d.nx != 0 {
 		panic("d.nx != 0")
 	}

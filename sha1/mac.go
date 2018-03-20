@@ -31,7 +31,7 @@ func GetSHA1Padding(in []byte) []byte {
 
 	bitLen64 := uint64(bitLen)
 	bitLenBytes := []byte{}
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 8; i++ {
 		bitLenBytes = append([]byte{uint8(bitLen64)}, bitLenBytes...)
 		bitLen64 >>= 8
 	}

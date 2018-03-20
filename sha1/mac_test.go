@@ -61,8 +61,11 @@ var _ = Describe("MAC", func() {
 		It("sums a manually padded content same as auto-padded", func() {
 			content := []byte("foo bar yellow submarine")
 			padding := sha1.GetSHA1Padding(content)
+			Expect((len(content) + len(padding)) % 64).To(Equal(0))
+
 			sumManual := sha1.SumWithoutPadding(append(content, padding...))
 			sumAuto := sha1.Sum(content)
+
 			Expect(sumManual).To(Equal(sumAuto))
 		})
 	})

@@ -109,6 +109,16 @@ func (d *digest) Reset() {
 	d.len = 0
 }
 
+func (d *digest) Seed(vals []uint32) {
+	d.h[0] = vals[0]
+	d.h[1] = vals[1]
+	d.h[2] = vals[2]
+	d.h[3] = vals[3]
+	d.h[4] = vals[4]
+	d.nx = 0
+	d.len = 0
+}
+
 // New returns a new hash.Hash computing the SHA1 checksum. The Hash also
 // implements encoding.BinaryMarshaler and encoding.BinaryUnmarshaler to
 // marshal and unmarshal the internal state of the hash.
@@ -280,6 +290,13 @@ func SumWithoutPadding(data []byte) [Size]byte {
 	d.Reset()
 	d.Write(data)
 	return d.checkSumNoPad()
+}
+
+func ExtensionSum(data []byte, seed []uint32) [Size]byte {
+	var d digest
+	d.Seed(seed)
+	d.Write(data)
+	return d.checkSum()
 }
 
 func putUint64(x []byte, s uint64) {

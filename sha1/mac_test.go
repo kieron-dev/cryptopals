@@ -58,9 +58,8 @@ var _ = Describe("MAC", func() {
 	})
 
 	Context("reproducing padding", func() {
-
-		It("sums a manually padded content same as auto-padded", func() {
-			content := []byte("foo bar yellow submarine")
+		DescribeTable("sums a manually padded content same as auto-padded", func(in string) {
+			content := []byte(in)
 			padding := sha1.GetSHA1Padding(len(content))
 			Expect((len(content) + len(padding)) % 64).To(Equal(0))
 
@@ -68,7 +67,11 @@ var _ = Describe("MAC", func() {
 			sumAuto := sha1.Sum(content)
 
 			Expect(sumManual).To(Equal(sumAuto))
-		})
+		},
+			Entry("<empty>", ""),
+			Entry("foo bar sha", "foo bar sha"),
+			Entry("The rain in Spain falls mainly on the plain", "The rain in Spain falls mainly on the plain"),
+		)
 	})
 
 	Context("extension hack", func() {
@@ -96,27 +99,43 @@ var _ = Describe("MAC", func() {
 			orig := []byte("Oh, I do like to be beside the seaside!")
 
 			sum := sha1.Sum(orig)
-			newSum := sha1.ExtensionSum(orig, seed)
+			newSum := sha1.ExtensionSum(orig, seed, 0)
 
 			Expect(newSum).To(Equal(sum))
 		})
 
-		FIt("extensionSum", func() {
-			key := []byte("YELLOW SUBMARINE")
+		It("can extend a SHA1 prefix key MAC with known key length", func() {
+			keyLen := 23
+			key := operations.RandomSlice(keyLen)
 			orig := []byte("Oh, I do like to be beside the seaside!")
+			extension := []byte(" Oh, I do like to be beside the sea!")
+
 			sum := sha1.GenerateSHA1MAC(key, orig)
 			Expect(sha1.VerifySHA1MAC(sum, key, orig)).To(BeTrue(), "normal MAC")
 
-			extension := []byte(" Oh, I do like to be beside the sea!")
-			newSum := sha1.ExtendSum(extension, sum)
+			padding := sha1.GetSHA1Padding(len(orig) + keyLen)
+			paddedOrig := append(orig, padding...)
+			newSum := sha1.ExtendSum(extension, sum, uint64(keyLen+len(orig)+len(padding)))
 
-			padding := sha1.GetSHA1Padding(len(orig) + len(key))
-			newContent := append(orig, padding...)
-			newContent = append(newContent, extension...)
+			newContent := append(paddedOrig, extension...)
 
 			manualSum := sha1.GenerateSHA1MAC(key, newContent)
 			Expect(newSum).To(Equal(manualSum))
+
 			Expect(sha1.VerifySHA1MAC(newSum, key, newContent)).To(BeTrue(), "extension MAC")
 		})
+	})
+
+	It("can get the key length", func() {
+		keyLen := 23
+		key := operations.RandomSlice(keyLen)
+		orig := []byte("Oh, I do like to be beside the seaside!")
+
+		sum := sha1.GenerateSHA1MAC(key, orig)
+		calcKeyLen, err := sha1.GetKeyLen(string(orig), sum, func(clear, hash string) bool {
+			return sha1.VerifySHA1MAC(hash, key, []byte(clear))
+		})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(calcKeyLen).To(Equal(23))
 	})
 })

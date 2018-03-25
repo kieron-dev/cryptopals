@@ -7,6 +7,8 @@ import (
 	"github.com/kieron-pivotal/cryptopals/conversion"
 	"github.com/kieron-pivotal/cryptopals/ctr"
 	"github.com/kieron-pivotal/cryptopals/operations"
+	"github.com/kieron-pivotal/cryptopals/sha1"
+	"github.com/kieron-pivotal/cryptopals/sha1/example"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -59,5 +61,17 @@ var _ = Describe("CryptopalsSet04", func() {
 		k := operations.Xor(out[:16], out[32:48])
 
 		Expect(k).To(Equal(key))
+	})
+
+	It("question 29 - break SHA1 key prefix MAC", func() {
+		clear, hash := example.GenerateCookie()
+		keyLen, err := sha1.GetKeyLen(clear, hash, example.VerifyCookie)
+		Expect(err).NotTo(HaveOccurred())
+		padding := sha1.GetSHA1Padding(keyLen + len(clear))
+		ext := ";admin=true"
+		newSum := sha1.ExtendSum([]byte(ext), hash, uint64(keyLen+len(clear)+len(padding)))
+
+		newContent := clear + string(padding) + ext
+		Expect(example.IsAdmin(newContent, newSum)).To(BeTrue(), "is admin")
 	})
 })

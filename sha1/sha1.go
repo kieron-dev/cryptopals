@@ -109,14 +109,14 @@ func (d *digest) Reset() {
 	d.len = 0
 }
 
-func (d *digest) Seed(vals []uint32) {
+func (d *digest) Seed(vals []uint32, len uint64) {
 	d.h[0] = vals[0]
 	d.h[1] = vals[1]
 	d.h[2] = vals[2]
 	d.h[3] = vals[3]
 	d.h[4] = vals[4]
 	d.nx = 0
-	d.len = 0
+	d.len = len
 }
 
 // New returns a new hash.Hash computing the SHA1 checksum. The Hash also
@@ -292,9 +292,9 @@ func SumWithoutPadding(data []byte) [Size]byte {
 	return d.checkSumNoPad()
 }
 
-func ExtensionSum(data []byte, seed []uint32) [Size]byte {
+func ExtensionSum(data []byte, seed []uint32, origLenWithPadding uint64) [Size]byte {
 	var d digest
-	d.Seed(seed)
+	d.Seed(seed, origLenWithPadding)
 	d.Write(data)
 	return d.checkSum()
 }

@@ -2,7 +2,7 @@ package sha1
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 
 	"github.com/kieron-pivotal/cryptopals/conversion"
 )
@@ -14,8 +14,6 @@ func GenerateSHA1MAC(key, contents []byte) string {
 
 func VerifySHA1MAC(mac string, key, contents []byte) bool {
 	recomputeMAC := GenerateSHA1MAC(key, contents)
-	fmt.Printf("mac = %+v\n", mac)
-	fmt.Printf("recomputeMAC = %+v\n", recomputeMAC)
 	return mac == recomputeMAC
 }
 
@@ -59,12 +57,27 @@ func SplitSum(sum []byte) []uint32 {
 	return out
 }
 
-func ExtendSum(extra []byte, prevSumHex string) string {
+func ExtendSum(extra []byte, prevSumHex string, prevLenPlusPadding uint64) string {
 	prevSum, err := conversion.HexToBytes(prevSumHex)
 	if err != nil {
 		panic(err)
 	}
 	seed := SplitSum(prevSum)
-	sum := ExtensionSum(extra, seed)
+	sum := ExtensionSum(extra, seed, prevLenPlusPadding)
 	return conversion.BytesToHex(sum[:])
+}
+
+func GetKeyLen(clear, hash string, verifyHash func(clear, hash string) bool) (l int, err error) {
+	lim := 1000
+	for l = 0; l < lim; l++ {
+		extension := "foo"
+		padding := GetSHA1Padding(len(clear) + l)
+		sum := ExtendSum([]byte(extension), hash, uint64(l+len(clear)+len(padding)))
+		newContents := append([]byte(clear), padding...)
+		newContents = append(newContents, []byte(extension)...)
+		if verifyHash(string(newContents), sum) {
+			return
+		}
+	}
+	return 0, errors.New("Could find key len below " + string(lim))
 }

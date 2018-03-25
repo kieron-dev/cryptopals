@@ -7,6 +7,8 @@ package md4
 
 import (
 	"hash"
+
+	"github.com/kieron-pivotal/cryptopals/conversion"
 )
 
 // The size of an MD4 checksum in bytes.
@@ -29,6 +31,13 @@ type digest struct {
 	x   [_Chunk]byte
 	nx  int
 	len uint64
+}
+
+func Sum(in []byte) string {
+	d := New()
+	d.Write(in)
+	sum := d.Sum(nil)
+	return conversion.BytesToHex(sum)
 }
 
 func (d *digest) Reset() {

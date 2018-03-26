@@ -7,8 +7,6 @@ package md4
 
 import (
 	"hash"
-
-	"github.com/kieron-pivotal/cryptopals/conversion"
 )
 
 // The size of an MD4 checksum in bytes.
@@ -33,11 +31,45 @@ type digest struct {
 	len uint64
 }
 
-func Sum(in []byte) string {
+func Sum(in []byte) (out [Size]byte) {
 	d := New()
 	d.Write(in)
 	sum := d.Sum(nil)
-	return conversion.BytesToHex(sum)
+	for i := 0; i < Size; i++ {
+		out[i] = sum[i]
+	}
+	return
+}
+
+func SumWithoutPadding(data []byte) (out [Size]byte) {
+	d := new(digest)
+	d.Reset()
+	d.Write(data)
+	sum := d.SumNoPadding(nil)
+	for i := 0; i < Size; i++ {
+		out[i] = sum[i]
+	}
+	return
+}
+
+func ExtensionSum(data []byte, seed []uint32, origLenWithPadding uint64) (out [Size]byte) {
+	d := new(digest)
+	d.Seed(seed, origLenWithPadding)
+	d.Write(data)
+	sum := d.Sum(nil)
+	for i := 0; i < Size; i++ {
+		out[i] = sum[i]
+	}
+	return
+}
+
+func (d *digest) Seed(vals []uint32, len uint64) {
+	d.s[0] = vals[0]
+	d.s[1] = vals[1]
+	d.s[2] = vals[2]
+	d.s[3] = vals[3]
+	d.nx = 0
+	d.len = len
 }
 
 func (d *digest) Reset() {
@@ -84,6 +116,20 @@ func (d *digest) Write(p []byte) (nn int, err error) {
 		d.nx = copy(d.x[:], p)
 	}
 	return
+}
+
+func (d0 *digest) SumNoPadding(in []byte) []byte {
+	// Make a copy of d0, so that caller can keep writing and summing.
+	d := new(digest)
+	*d = *d0
+
+	for _, s := range d.s {
+		in = append(in, byte(s>>0))
+		in = append(in, byte(s>>8))
+		in = append(in, byte(s>>16))
+		in = append(in, byte(s>>24))
+	}
+	return in
 }
 
 func (d0 *digest) Sum(in []byte) []byte {

@@ -6,6 +6,8 @@ import (
 
 	"github.com/kieron-pivotal/cryptopals/conversion"
 	"github.com/kieron-pivotal/cryptopals/ctr"
+	"github.com/kieron-pivotal/cryptopals/md4"
+	md4example "github.com/kieron-pivotal/cryptopals/md4/example"
 	"github.com/kieron-pivotal/cryptopals/operations"
 	"github.com/kieron-pivotal/cryptopals/sha1"
 	"github.com/kieron-pivotal/cryptopals/sha1/example"
@@ -73,5 +75,17 @@ var _ = Describe("CryptopalsSet04", func() {
 
 		newContent := clear + string(padding) + ext
 		Expect(example.IsAdmin(newContent, newSum)).To(BeTrue(), "is admin")
+	})
+
+	It("question 30 - break MD4 key prefix MAC", func() {
+		clear, hash := md4example.GenerateCookie()
+		keyLen, err := md4.GetKeyLen(clear, hash, md4example.VerifyCookie)
+		Expect(err).NotTo(HaveOccurred())
+		padding := md4.GetMD4Padding(keyLen + len(clear))
+		ext := ";admin=true"
+		newSum := md4.ExtendSum([]byte(ext), hash, uint64(keyLen+len(clear)+len(padding)))
+
+		newContent := clear + string(padding) + ext
+		Expect(md4example.IsAdmin(newContent, newSum)).To(BeTrue(), "is admin")
 	})
 })

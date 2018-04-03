@@ -108,10 +108,12 @@ var _ = Describe("Web", func() {
 			attempt := fmt.Sprintf("%x00", i)
 			urlStr := fmt.Sprintf(url, file.Name(), attempt)
 			t0 := time.Now()
-			resp, err := http.Get(urlStr)
+			for j := 0; j < 6; j++ {
+				resp, err := http.Get(urlStr)
+				Expect(err).NotTo(HaveOccurred())
+				resp.Body.Close()
+			}
 			t1 := time.Now()
-			Expect(err).NotTo(HaveOccurred())
-			resp.Body.Close()
 			dur := t1.Sub(t0)
 			if dur > maxTime {
 				maxTime = dur

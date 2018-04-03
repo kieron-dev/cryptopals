@@ -14,7 +14,7 @@ import (
 
 var (
 	key           = []byte("key")
-	sleepInterval = 30 * time.Millisecond
+	sleepInterval = 5 * time.Millisecond
 )
 
 func main() {

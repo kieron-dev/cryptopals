@@ -26,7 +26,9 @@ func crackByte(hash []byte, pos int, prop string, makeCall func(hash []byte)) {
 	for i := 0; i < 256; i++ {
 		hash[pos] = byte(i)
 		t0 := time.Now()
-		makeCall(hash)
+		for j := 0; j < 6; j++ {
+			makeCall(hash)
+		}
 		t1 := time.Now()
 		dur := t1.Sub(t0)
 		if dur > maxTime {

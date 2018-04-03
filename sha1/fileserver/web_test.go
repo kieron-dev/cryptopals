@@ -5,56 +5,54 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
+	"time"
 
+	"github.com/kieron-pivotal/cryptopals/conversion"
+	"github.com/kieron-pivotal/cryptopals/sha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
-	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("Web", func() {
 
+	const (
+		url          = "http://localhost:9000/test?file=%s&signature=%s"
+		quickFox     = "The quick brown fox jumps over the lazy dog"
+		quickFoxHmac = "de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9"
+	)
+
 	var (
-		session *gexec.Session
-		err     error
-		url     string
+		err  error
+		file *os.File
 	)
 
 	BeforeEach(func() {
-		command := exec.Command(pathToExe)
-		session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
-		Expect(err).ShouldNot(HaveOccurred())
-		url = "http://localhost:9000/test?file=%s&signature=%s"
+		file, err = ioutil.TempFile("", "hmac")
+		Expect(err).NotTo(HaveOccurred())
+		_, err = file.Write([]byte(quickFox))
+		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("can start the web server", func() {
-		Eventually(session.Out).Should(gbytes.Say("Listening"))
+	AfterEach(func() {
+		file.Close()
+		os.Remove(file.Name())
 	})
 
 	It("returns a file if file exists and sig is right", func() {
-		file, err := ioutil.TempFile("", "hmac")
-		Expect(err).NotTo(HaveOccurred())
-
-		_, err = file.Write([]byte("The quick brown fox jumps over the lazy dog"))
-		Expect(err).NotTo(HaveOccurred())
-		defer os.Remove(file.Name())
-		defer file.Close()
-
-		get := fmt.Sprintf(url, file.Name(), "de7c9b85b8b78aa6bc8a7a36f70a90701c9db4d9")
+		get := fmt.Sprintf(url, file.Name(), quickFoxHmac)
 		resp, err := http.Get(get)
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 
 		body, err := ioutil.ReadAll(resp.Body)
 		Expect(err).NotTo(HaveOccurred())
-
-		Expect(body).To(Equal([]byte("The quick brown fox jumps over the lazy dog")))
+		Expect(body).To(Equal([]byte(quickFox)))
 	})
 
 	DescribeTable("Empty params gets 400 error", func(urlstr string) {
-		resp, err := http.Get(url)
+		urlStr := fmt.Sprintf(url, "", "")
+		resp, err := http.Get(urlStr)
 		Expect(err).NotTo(HaveOccurred())
 		defer resp.Body.Close()
 		Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
@@ -74,18 +72,64 @@ var _ = Describe("Web", func() {
 	})
 
 	It("if sig wrong get 403", func() {
-		file, err := ioutil.TempFile("", "hmac")
-		Expect(err).NotTo(HaveOccurred())
-
-		_, err = file.Write([]byte("The quick brown fox jumps over the lazy dog"))
-		Expect(err).NotTo(HaveOccurred())
-		defer os.Remove(file.Name())
-		defer file.Close()
-
 		urlstr := fmt.Sprintf(url, file.Name(), "asdf")
 		resp, err := http.Get(urlstr)
 		Expect(err).NotTo(HaveOccurred())
+		resp.Body.Close()
 		Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+	})
+
+	It("is quicker to get the first sig byte wrong than the second", func() {
+		secondWrong := fmt.Sprintf(url, file.Name(), "de7d")
+		firstWrong := fmt.Sprintf(url, file.Name(), "da7c")
+		start := time.Now()
+		resp, err := http.Get(secondWrong)
+		end := time.Now()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+
+		secondWrongTime := end.Sub(start)
+
+		start = time.Now()
+		resp, err = http.Get(firstWrong)
+		end = time.Now()
+		Expect(err).NotTo(HaveOccurred())
+		resp.Body.Close()
+		Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+		firstWrongTime := end.Sub(start)
+
+		Expect(firstWrongTime).To(BeNumerically("<", secondWrongTime))
+	})
+
+	It("is possible to guess byte 1 through timing", func() {
+		maxTime := time.Duration(0)
+		var b byte
+		for i := 0; i < 256; i++ {
+			attempt := fmt.Sprintf("%x00", i)
+			urlStr := fmt.Sprintf(url, file.Name(), attempt)
+			t0 := time.Now()
+			resp, err := http.Get(urlStr)
+			t1 := time.Now()
+			Expect(err).NotTo(HaveOccurred())
+			resp.Body.Close()
+			dur := t1.Sub(t0)
+			if dur > maxTime {
+				maxTime = dur
+				b = byte(i)
+			}
+		}
+		Expect(b).To(Equal(byte(0xde)))
+	})
+
+	It("is possible to guess the whole hash", func() {
+		hash := sha1.GetSHA1HMAC(file.Name(), func(hash []byte) {
+			urlStr := fmt.Sprintf(url, file.Name(), conversion.BytesToHex(hash))
+			resp, err := http.Get(urlStr)
+			Expect(err).NotTo(HaveOccurred())
+			resp.Body.Close()
+		})
+		hex := conversion.BytesToHex(hash)
+		Expect(hex).To(Equal(quickFoxHmac))
 	})
 
 })

@@ -6,12 +6,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/kieron-pivotal/cryptopals/conversion"
 	"github.com/kieron-pivotal/cryptopals/sha1"
 )
 
-var key = []byte("key")
+var (
+	key           = []byte("key")
+	sleepInterval = 30 * time.Millisecond
+)
 
 func main() {
 	http.HandleFunc("/test", testHandler)
@@ -37,7 +41,7 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hexHMAC := conversion.BytesToHex(hmac)
-	if hexHMAC != sig {
+	if !bytesAreEqual(hexHMAC, sig) {
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintln(w, "<h1>Forbidden</h1>")
 		return
@@ -51,4 +55,23 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(b)
+}
+
+func bytesAreEqual(hmac, sig string) bool {
+	hmacBytes, err := conversion.HexToBytes(hmac)
+	if err != nil {
+		return false
+	}
+	sigBytes, err := conversion.HexToBytes(sig)
+	if err != nil {
+		return false
+	}
+
+	for i := 0; i < len(hmacBytes) && i < len(sigBytes); i++ {
+		if hmacBytes[i] != sigBytes[i] {
+			return false
+		}
+		time.Sleep(sleepInterval)
+	}
+	return len(hmacBytes) == len(sigBytes)
 }

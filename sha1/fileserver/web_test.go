@@ -123,7 +123,7 @@ var _ = Describe("Web", func() {
 		Expect(b).To(Equal(byte(0xde)))
 	})
 
-	It("is possible to guess the whole hash", func() {
+	XIt("is possible to guess the whole hash", func() {
 		hash := sha1.GetSHA1HMAC(file.Name(), func(hash []byte) {
 			urlStr := fmt.Sprintf(url, file.Name(), conversion.BytesToHex(hash))
 			resp, err := http.Get(urlStr)

@@ -111,6 +111,7 @@ var _ = Describe("Web", func() {
 			for j := 0; j < 6; j++ {
 				resp, err := http.Get(urlStr)
 				Expect(err).NotTo(HaveOccurred())
+				ioutil.ReadAll(resp.Body)
 				resp.Body.Close()
 			}
 			t1 := time.Now()
@@ -128,6 +129,7 @@ var _ = Describe("Web", func() {
 			urlStr := fmt.Sprintf(url, file.Name(), conversion.BytesToHex(hash))
 			resp, err := http.Get(urlStr)
 			Expect(err).NotTo(HaveOccurred())
+			ioutil.ReadAll(resp.Body)
 			resp.Body.Close()
 		})
 		hex := conversion.BytesToHex(hash)

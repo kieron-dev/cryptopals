@@ -108,7 +108,7 @@ var _ = Describe("Web", func() {
 			attempt := fmt.Sprintf("%x00", i)
 			urlStr := fmt.Sprintf(url, file.Name(), attempt)
 			t0 := time.Now()
-			for j := 0; j < 6; j++ {
+			for j := 0; j < 8; j++ {
 				resp, err := http.Get(urlStr)
 				Expect(err).NotTo(HaveOccurred())
 				ioutil.ReadAll(resp.Body)

@@ -1,0 +1,13 @@
+package diffiehellman_test
+
+import (
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"testing"
+)
+
+func TestDiffiehellman(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Diffiehellman Suite")
+}

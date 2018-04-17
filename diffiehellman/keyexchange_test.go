@@ -9,9 +9,14 @@ import (
 )
 
 var _ = Describe("Keyexchange", func() {
-	It("creates identical a & b sessions", func() {
-		g := big.NewInt(2)
-		p := new(big.Int)
+	var (
+		g, p   *big.Int
+		k1, k2 *diffiehellman.Keys
+	)
+
+	BeforeEach(func() {
+		g = big.NewInt(2)
+		p = new(big.Int)
 		p.SetString("ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024"+
 			"e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd"+
 			"3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec"+
@@ -20,8 +25,16 @@ var _ = Describe("Keyexchange", func() {
 			"c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552"+
 			"bb9ed529077096966d670c354e4abc9804f1746c08ca237327fff"+
 			"fffffffffffff", 16)
-		k1 := diffiehellman.New(g, p)
-		k2 := diffiehellman.New(g, p)
+		k1 = diffiehellman.New(g, p)
+		k2 = diffiehellman.New(g, p)
+	})
+
+	It("creates identical a & b sessions", func() {
 		Expect(k1.Session(k2.Key)).To(Equal(k2.Session(k1.Key)))
+	})
+
+	It("gives a zero session if you use p instead of other key", func() {
+		s := k1.Session(p)
+		Expect(s.Cmp(big.NewInt(0))).To(Equal(0))
 	})
 })

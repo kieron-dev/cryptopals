@@ -10,53 +10,88 @@ import (
 	"github.com/kieron-pivotal/cryptopals/operations"
 )
 
-func StartSession(p, g *big.Int, ch chan string) []byte {
-	k := New(g, p)
-	ch <- fmt.Sprintf("%x", p)
-	ch <- fmt.Sprintf("%x", g)
-	ch <- fmt.Sprintf("%x", k.Key)
+type DHUser struct {
+	ch   chan string
+	p, g *big.Int
+	k    *Keys
+	sess []byte
+}
 
-	otherKeyStr := <-ch
+type Client struct {
+	DHUser
+}
+
+type Server struct {
+	DHUser
+}
+
+type MITM struct {
+	DHUser
+}
+
+func NewClient(p, g *big.Int) *Client {
+	c := new(Client)
+	c.p = p
+	c.g = g
+	c.k = New(c.g, c.p)
+	return c
+}
+
+func NewServer() *Server {
+	s := new(Server)
+	return s
+}
+
+func (c *Client) StartSession(ch chan string) (session []byte) {
+	c.ch = ch
+	c.ch <- fmt.Sprintf("%x", c.p)
+	c.ch <- fmt.Sprintf("%x", c.g)
+	c.ch <- fmt.Sprintf("%x", c.k.Key)
+
+	otherKeyStr := <-c.ch
 	otherKey := new(big.Int)
 	otherKey.SetString(otherKeyStr, 16)
 
-	return k.Session(otherKey).Bytes()
+	c.sess = c.k.Session(otherKey).Bytes()
+	return c.sess
 }
 
-func PairSession(ch chan string) []byte {
-	g := new(big.Int)
-	p := new(big.Int)
+func (s *Server) PairSession(ch chan string) (session []byte) {
+	s.ch = ch
+	s.g = new(big.Int)
+	s.p = new(big.Int)
 	otherKey := new(big.Int)
 
-	pStr := <-ch
-	gStr := <-ch
-	otherKeyStr := <-ch
+	pStr := <-s.ch
+	gStr := <-s.ch
+	otherKeyStr := <-s.ch
 
-	p.SetString(pStr, 16)
-	g.SetString(gStr, 16)
+	s.p.SetString(pStr, 16)
+	s.g.SetString(gStr, 16)
 	otherKey.SetString(otherKeyStr, 16)
 
-	k := New(g, p)
+	s.k = New(s.g, s.p)
 
-	ch <- fmt.Sprintf("%x", k.Key)
-	return k.Session(otherKey).Bytes()
+	s.ch <- fmt.Sprintf("%x", s.k.Key)
+	s.sess = s.k.Session(otherKey).Bytes()
+	return s.sess
 }
 
-func SendTestMessage(ch chan string, sess []byte, msg []byte) (ok bool, err error) {
+func (c *Client) SendTestMessage(msg []byte) (ok bool, err error) {
 	const blocksize = 16
 	iv := operations.RandomSlice(blocksize)
-	sum := sha1.Sum(sess)
+	sum := sha1.Sum(c.sess)
 	key := sum[:blocksize]
 	paddedMsg := operations.PKCS7(msg, blocksize)
 	encrypted, err := operations.AES128CBCEncode(paddedMsg, key, iv)
 	if err != nil {
 		return false, err
 	}
-	ch <- fmt.Sprintf("%x", iv)
-	ch <- fmt.Sprintf("%x", encrypted)
+	c.ch <- fmt.Sprintf("%x", iv)
+	c.ch <- fmt.Sprintf("%x", encrypted)
 
-	respIVStr := <-ch
-	respMsgStr := <-ch
+	respIVStr := <-c.ch
+	respMsgStr := <-c.ch
 
 	iv, err = conversion.HexToBytes(respIVStr)
 	if err != nil {
@@ -76,13 +111,13 @@ func SendTestMessage(ch chan string, sess []byte, msg []byte) (ok bool, err erro
 	return bytes.Equal(clear, msg), nil
 }
 
-func ReplyTestMessage(ch chan string, sess []byte) error {
+func (s *Server) ReplyTestMessage() error {
 	iv := operations.RandomSlice(16)
-	sum := sha1.Sum(sess)
+	sum := sha1.Sum(s.sess)
 	key := sum[:16]
 
-	otherIVStr := <-ch
-	encMsgStr := <-ch
+	otherIVStr := <-s.ch
+	encMsgStr := <-s.ch
 
 	otherIV, err := conversion.HexToBytes(otherIVStr)
 	if err != nil {
@@ -103,8 +138,8 @@ func ReplyTestMessage(ch chan string, sess []byte) error {
 		return err
 	}
 
-	ch <- fmt.Sprintf("%x", iv)
-	ch <- fmt.Sprintf("%x", enc)
+	s.ch <- fmt.Sprintf("%x", iv)
+	s.ch <- fmt.Sprintf("%x", enc)
 
 	return nil
 }

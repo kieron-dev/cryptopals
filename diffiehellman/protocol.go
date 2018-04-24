@@ -3,6 +3,7 @@ package diffiehellman
 import (
 	"bytes"
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -17,81 +18,80 @@ type DHUser struct {
 	sess []byte
 }
 
-type Client struct {
-	DHUser
+func (d *DHUser) Connect(server *DHUser) {
+	server.ch = make(chan string)
+	d.ch = server.ch
 }
 
-type Server struct {
-	DHUser
-}
-
-type MITM struct {
-	DHUser
-}
-
-func NewClient(p, g *big.Int) *Client {
-	c := new(Client)
+func NewClient(p, g *big.Int) *DHUser {
+	c := new(DHUser)
 	c.p = p
 	c.g = g
 	c.k = New(c.g, c.p)
 	return c
 }
 
-func NewServer() *Server {
-	s := new(Server)
+func NewServer() *DHUser {
+	s := new(DHUser)
 	return s
 }
 
-func (c *Client) StartSession(ch chan string) (session []byte) {
-	c.ch = ch
-	c.ch <- fmt.Sprintf("%x", c.p)
-	c.ch <- fmt.Sprintf("%x", c.g)
-	c.ch <- fmt.Sprintf("%x", c.k.Key)
+func (d *DHUser) InitKeyExchange() (session []byte, err error) {
+	if d.ch == nil {
+		return nil, errors.New("You need to get the channel first")
+	}
 
-	otherKeyStr := <-c.ch
+	d.ch <- fmt.Sprintf("%x", d.p)
+	d.ch <- fmt.Sprintf("%x", d.g)
+	d.ch <- fmt.Sprintf("%x", d.k.Key)
+
+	otherKeyStr := <-d.ch
 	otherKey := new(big.Int)
 	otherKey.SetString(otherKeyStr, 16)
 
-	c.sess = c.k.Session(otherKey).Bytes()
-	return c.sess
+	d.sess = d.k.Session(otherKey).Bytes()
+	return d.sess, nil
 }
 
-func (s *Server) PairSession(ch chan string) (session []byte) {
-	s.ch = ch
-	s.g = new(big.Int)
-	s.p = new(big.Int)
+func (d *DHUser) CompleteKeyExchange() (session []byte, err error) {
+	if d.ch == nil {
+		return nil, errors.New("You need to get a channel first!")
+	}
+
+	d.g = new(big.Int)
+	d.p = new(big.Int)
 	otherKey := new(big.Int)
 
-	pStr := <-s.ch
-	gStr := <-s.ch
-	otherKeyStr := <-s.ch
+	pStr := <-d.ch
+	gStr := <-d.ch
+	otherKeyStr := <-d.ch
 
-	s.p.SetString(pStr, 16)
-	s.g.SetString(gStr, 16)
+	d.p.SetString(pStr, 16)
+	d.g.SetString(gStr, 16)
 	otherKey.SetString(otherKeyStr, 16)
 
-	s.k = New(s.g, s.p)
+	d.k = New(d.g, d.p)
 
-	s.ch <- fmt.Sprintf("%x", s.k.Key)
-	s.sess = s.k.Session(otherKey).Bytes()
-	return s.sess
+	d.ch <- fmt.Sprintf("%x", d.k.Key)
+	d.sess = d.k.Session(otherKey).Bytes()
+	return d.sess, nil
 }
 
-func (c *Client) SendTestMessage(msg []byte) (ok bool, err error) {
+func (d *DHUser) SendTestMessage(msg []byte) (ok bool, err error) {
 	const blocksize = 16
 	iv := operations.RandomSlice(blocksize)
-	sum := sha1.Sum(c.sess)
+	sum := sha1.Sum(d.sess)
 	key := sum[:blocksize]
 	paddedMsg := operations.PKCS7(msg, blocksize)
 	encrypted, err := operations.AES128CBCEncode(paddedMsg, key, iv)
 	if err != nil {
 		return false, err
 	}
-	c.ch <- fmt.Sprintf("%x", iv)
-	c.ch <- fmt.Sprintf("%x", encrypted)
+	d.ch <- fmt.Sprintf("%x", iv)
+	d.ch <- fmt.Sprintf("%x", encrypted)
 
-	respIVStr := <-c.ch
-	respMsgStr := <-c.ch
+	respIVStr := <-d.ch
+	respMsgStr := <-d.ch
 
 	iv, err = conversion.HexToBytes(respIVStr)
 	if err != nil {
@@ -111,13 +111,13 @@ func (c *Client) SendTestMessage(msg []byte) (ok bool, err error) {
 	return bytes.Equal(clear, msg), nil
 }
 
-func (s *Server) ReplyTestMessage() error {
+func (d *DHUser) ReplyTestMessage() error {
 	iv := operations.RandomSlice(16)
-	sum := sha1.Sum(s.sess)
+	sum := sha1.Sum(d.sess)
 	key := sum[:16]
 
-	otherIVStr := <-s.ch
-	encMsgStr := <-s.ch
+	otherIVStr := <-d.ch
+	encMsgStr := <-d.ch
 
 	otherIV, err := conversion.HexToBytes(otherIVStr)
 	if err != nil {
@@ -138,8 +138,8 @@ func (s *Server) ReplyTestMessage() error {
 		return err
 	}
 
-	s.ch <- fmt.Sprintf("%x", iv)
-	s.ch <- fmt.Sprintf("%x", enc)
+	d.ch <- fmt.Sprintf("%x", iv)
+	d.ch <- fmt.Sprintf("%x", enc)
 
 	return nil
 }

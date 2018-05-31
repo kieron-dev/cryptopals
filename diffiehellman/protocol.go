@@ -6,37 +6,67 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/kieron-pivotal/cryptopals/conversion"
 	"github.com/kieron-pivotal/cryptopals/operations"
 )
 
-type DHUser struct {
+type DHPeer struct {
 	ch   chan string
 	p, g *big.Int
 	k    *Keys
 	sess []byte
 }
 
-func (d *DHUser) Connect(server *DHUser) {
-	server.ch = make(chan string)
-	d.ch = server.ch
+type DHUser interface {
+	Connect(p DHUser) (error, error)
+	makeChannel() chan string
+	initKeyExchange() ([]byte, error)
+	completeKeyExchange() ([]byte, error)
 }
 
-func NewClient(p, g *big.Int) *DHUser {
-	c := new(DHUser)
+func (d *DHPeer) Connect(server DHUser) (clientErr, serverErr error) {
+	ch := server.makeChannel()
+	d.ch = ch
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		_, clientErr = d.initKeyExchange()
+	}()
+
+	go func() {
+		defer wg.Done()
+		_, serverErr = server.completeKeyExchange()
+	}()
+
+	wg.Wait()
+	return clientErr, serverErr
+}
+
+func (d *DHPeer) makeChannel() chan string {
+	ch := make(chan string)
+	d.ch = ch
+	return ch
+}
+
+func NewClient(p, g *big.Int) *DHPeer {
+	c := new(DHPeer)
 	c.p = p
 	c.g = g
 	c.k = New(c.g, c.p)
 	return c
 }
 
-func NewServer() *DHUser {
-	s := new(DHUser)
+func NewServer() *DHPeer {
+	s := new(DHPeer)
 	return s
 }
 
-func (d *DHUser) InitKeyExchange() (session []byte, err error) {
+func (d *DHPeer) initKeyExchange() (session []byte, err error) {
 	if d.ch == nil {
 		return nil, errors.New("You need to get the channel first")
 	}
@@ -53,9 +83,9 @@ func (d *DHUser) InitKeyExchange() (session []byte, err error) {
 	return d.sess, nil
 }
 
-func (d *DHUser) CompleteKeyExchange() (session []byte, err error) {
+func (d *DHPeer) completeKeyExchange() (session []byte, err error) {
 	if d.ch == nil {
-		return nil, errors.New("You need to get a channel first!")
+		return nil, errors.New("you need to get a channel first")
 	}
 
 	d.g = new(big.Int)
@@ -77,7 +107,7 @@ func (d *DHUser) CompleteKeyExchange() (session []byte, err error) {
 	return d.sess, nil
 }
 
-func (d *DHUser) SendTestMessage(msg []byte) (ok bool, err error) {
+func (d *DHPeer) SendTestMessage(msg []byte) (ok bool, err error) {
 	const blocksize = 16
 	iv := operations.RandomSlice(blocksize)
 	sum := sha1.Sum(d.sess)
@@ -111,7 +141,7 @@ func (d *DHUser) SendTestMessage(msg []byte) (ok bool, err error) {
 	return bytes.Equal(clear, msg), nil
 }
 
-func (d *DHUser) ReplyTestMessage() error {
+func (d *DHPeer) ReplyTestMessage() error {
 	iv := operations.RandomSlice(16)
 	sum := sha1.Sum(d.sess)
 	key := sum[:16]
